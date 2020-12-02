@@ -14,22 +14,23 @@ let salonEnabled = false;
 let turndown = undefined;
 
 
-Hooks.on("renderChatLog", async function(chatLog, html, user) {
+Hooks.on("renderChatLog", async function (chatLog, html, user) {
 
   if (shouldHideDueToStreamView()) return;
 
   var toPrepend = '<nav class="tabbedchatlog tabs">';
   toPrepend += `<a class="item ic" data-tab="ic">${game.i18n.localize("TC.TABS.IC")}</a><i id="icNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
   toPrepend += `<a class="item rolls" data-tab="rolls">${game.i18n.localize("TC.TABS.Rolls")}</a><i id="rollsNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
-  toPrepend += `<a class="item ooc" data-tab="ooc">${game.i18n.localize("TC.TABS.OOC")}</a></nav><i id="oocNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
+  toPrepend += `<a class="item ooc" data-tab="ooc">${game.i18n.localize("TC.TABS.OOC")}</a><i id="oocNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
+  toPrepend += `<a class="item init" data-tab="init">${game.i18n.localize("TC.TABS.Initiative")}</a></nav>`;
   html.prepend(toPrepend);
 
   var me = this;
-  const tabs = new TabsV2({ 
+  const tabs = new TabsV2({
     navSelector: ".tabs",
-    contentSelector: ".content", 
-    initial: "tab1", 
-    callback: function(event, html, tab) { 
+    contentSelector: ".content",
+    initial: "tab1",
+    callback: function (event, html, tab) {
       currentTab = tab;
 
       if (tab == "rolls") {
@@ -41,6 +42,7 @@ Hooks.on("renderChatLog", async function(chatLog, html, user) {
         $(".type4").hide();
         $(".type5").removeClass("hardHide");
         $(".type5").not(".gm-roll-hidden").show();
+        $(".type55").hide();
 
         $("#rollsNotification").hide();
       }
@@ -57,6 +59,7 @@ Hooks.on("renderChatLog", async function(chatLog, html, user) {
         if (!salonEnabled) {
           $(".type0").hide();
           $(".type5").hide();
+          $(".type55").hide();
         }
 
         $("#icNotification").hide();
@@ -66,22 +69,33 @@ Hooks.on("renderChatLog", async function(chatLog, html, user) {
         $(".type1").show();
         $(".type2").hide();
         $(".type3").hide();
-        
+
         if (!salonEnabled) {
           $(".type0").hide();
           $(".type4").removeClass("hardHide");
           $(".type4").show();
           $(".type5").hide();
+          $(".type55").hide();
         }
 
         $("#oocNotification").hide();
+      }
+      else if (tab == "init") {
+        $(".type0").hide();
+        $(".type1").hide();
+        $(".type2").hide();
+        $(".type3").hide();
+        $(".type4").hide();
+        $(".type5").hide();
+        $(".type55").removeClass("hardHide");
+        $(".type55").not(".gm-roll-hidden").show();
       }
       else {
         console.log("Unknown tab " + tab + "!");
       }
 
       $("#chat-log").scrollTop(9999999);
-    } 
+    }
   });
   tabs.bind(html[0]);
 });
@@ -90,7 +104,7 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
 
   if (shouldHideDueToStreamView()) return;
 
-  html.addClass("type" + data.message.type);
+  html.addClass("type" + data.message.type + (data.message.flags.core?.initiativeRoll ? "5" : ""));
 
   var sceneMatches = true;
 
@@ -114,15 +128,14 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
   if (salonEnabled && chatMessage.data.type == 4) return;
 
   if (currentTab == "rolls") {
-    if (chatMessage.data.type == 0 && sceneMatches)
-    {
+    if (chatMessage.data.type == 0 && sceneMatches) {
       html.css("display", "list-item");
     }
-    else if (data.message.type == 5 && sceneMatches) {
+    else if (data.message.type == 5 && sceneMatches && !data.message.flags.core?.initiativeRoll) {
       if (!html.hasClass('gm-roll-hidden')) {
         if (game.dice3d && game.settings.get("dice-so-nice", "settings").enabled && game.settings.get("dice-so-nice", "enabled")) {
           if (!game.settings.get("dice-so-nice", "immediatelyDisplayChatMessages")) return;
-        } 
+        }
         html.css("display", "list-item");
       }
     }
@@ -130,9 +143,16 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
       html.css("display", "none");
     }
   }
+  else if (currentTab == "init") {
+    if (data.message.type == 5 && sceneMatches && !html.hasClass('gm-roll-hidden') && data.message.flags.core?.initiativeRoll) {
+      html.css("display", "list-item");
+    }
+    else {
+      html.css("display", "none");
+    }
+  }
   else if (currentTab == "ic") {
-    if ((data.message.type == 2 || data.message.type == 3) && sceneMatches)
-    {
+    if ((data.message.type == 2 || data.message.type == 3) && sceneMatches) {
       html.css("display", "list-item");
     }
     else {
@@ -141,8 +161,7 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
     }
   }
   else if (currentTab == "ooc") {
-    if (data.message.type == 1 || data.message.type == 4)
-    {
+    if (data.message.type == 1 || data.message.type == 4) {
       html.css("display", "list-item");
     }
     else {
@@ -153,15 +172,14 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
 
 Hooks.on("diceSoNiceRollComplete", (id) => {
   if (currentTab != "rolls") {
-      $("#chat-log .message[data-message-id=" + id + "]").css("display", "none");
+    $("#chat-log .message[data-message-id=" + id + "]").css("display", "none");
   }
 });
 
 Hooks.on("createChatMessage", (chatMessage, content) => {
   var sceneMatches = true;
 
-  if (chatMessage.data.speaker.scene)
-  {
+  if (chatMessage.data.speaker.scene) {
     if (chatMessage.data.speaker.scene != game.user.viewedScene) {
       sceneMatches = false;
     }
@@ -173,22 +191,19 @@ Hooks.on("createChatMessage", (chatMessage, content) => {
     }
   }
   else if (chatMessage.data.type == 5) {
-    if (currentTab != "rolls" && sceneMatches && chatMessage.data.whisper.length == 0) {
+    if (currentTab != "rolls" && sceneMatches && chatMessage.data.whisper.length == 0 && !chatMessage.data.flags.core?.initiativeRoll) {
       $("#rollsNotification").show();
     }
   }
-  else if (chatMessage.data.type == 2 || chatMessage.data.type == 3)
-  {
-    if (currentTab != "ic" && sceneMatches)
-    { 
+  else if (chatMessage.data.type == 2 || chatMessage.data.type == 3) {
+    if (currentTab != "ic" && sceneMatches) {
       $("#icNotification").show();
     }
   }
-  else
-  {
+  else {
     if (salonEnabled && chatMessage.data.type == 4) return;
 
-    if (currentTab != "ooc") { 
+    if (currentTab != "ooc") {
       $("#oocNotification").show();
     }
   }
@@ -196,12 +211,11 @@ Hooks.on("createChatMessage", (chatMessage, content) => {
 
 Hooks.on("preCreateChatMessage", (chatMessage, content) => {
 
-  if (game.settings.get('tabbed-chatlog', 'icChatInOoc'))
-  {
+  if (game.settings.get('tabbed-chatlog', 'icChatInOoc')) {
     if (currentTab == "ooc") {
       if (chatMessage.type == 2) {
         chatMessage.type = 1;
-        delete(chatMessage.speaker);
+        delete (chatMessage.speaker);
         console.log(chatMessage);
       }
     }
@@ -210,13 +224,11 @@ Hooks.on("preCreateChatMessage", (chatMessage, content) => {
   if (chatMessage.type == 0 || chatMessage.type == 5) {
 
   }
-  else if (chatMessage.type == 2 || chatMessage.type == 3)
-  {
-    try
-    {
+  else if (chatMessage.type == 2 || chatMessage.type == 3) {
+    try {
       let scene = game.scenes.get(chatMessage.speaker.scene);
       let webhook = scene.getFlag("tabbed-chatlog", "webhook");
-      
+
       if (webhook == undefined || webhook == "") {
         webhook = game.settings.get("tabbed-chatlog", "icBackupWebhook");
       }
@@ -230,12 +242,12 @@ Hooks.on("preCreateChatMessage", (chatMessage, content) => {
       let img = "";
       let name = "";
       if (actor) {
-          img = generatePortraitImageElement(actor);
-          name = actor.name;
+        img = generatePortraitImageElement(actor);
+        name = actor.name;
       }
       else {
-          img = game.users.get(chatMessage.user).avatar;
-          name = speaker.alias;
+        img = game.users.get(chatMessage.user).avatar;
+        name = speaker.alias;
       }
 
       img = game.data.addresses.remote + "/" + img;
@@ -252,10 +264,8 @@ Hooks.on("preCreateChatMessage", (chatMessage, content) => {
       console.log(error);
     }
   }
-  else
-  {
-    try
-    {
+  else {
+    try {
       let webhook = game.settings.get("tabbed-chatlog", "oocWebhook");
 
       if (webhook == undefined || webhook == "") {
@@ -284,7 +294,7 @@ function sendToDiscord(webhook, body) {
     type: 'POST',
     url: webhook,
     data: JSON.stringify(body),
-    success: function(data) {},
+    success: function (data) { },
     contentType: "application/json",
     dataType: 'json'
   });
@@ -293,39 +303,43 @@ function sendToDiscord(webhook, body) {
 function loadActorForChatMessage(speaker) {
   var actor;
   if (speaker.token) {
-      actor = game.actors.tokens[speaker.token];
+    actor = game.actors.tokens[speaker.token];
   }
   if (!actor) {
-      actor = game.actors.get((speaker.actor));
+    actor = game.actors.get((speaker.actor));
   }
   if (!actor) {
-      game.actors.forEach((value) => {
+    game.actors.forEach((value) => {
       if (value.name === speaker.alias) {
-          actor = value;
+        actor = value;
       }
-      });
+    });
   }
   return actor;
 }
-  
+
 function generatePortraitImageElement(actor) {
-    let img = "";
-    img = actor.token ? actor.token.data.img : actor.data.token.img;
-    return img;
-  }
+  let img = "";
+  img = actor.token ? actor.token.data.img : actor.data.token.img;
+  return img;
+}
 
 Hooks.on("renderSceneNavigation", (sceneNav, html, data) => {
 
   if (shouldHideDueToStreamView()) return;
 
   var viewedScene = sceneNav.scenes.find(x => x.isView);
- 
+
   $(".scenespecific").hide();
   if (currentTab == "rolls") {
     $(".type0.scene" + game.user.viewedScene).removeClass("hardHide");
     $(".type0.scene" + viewedScene.id).show();
     $(".type5.scene" + game.user.viewedScene).removeClass("hardHide");
     $(".type5.scene" + viewedScene.id).not(".gm-roll-hidden").show();
+  }
+  else if (currentTab == "init") {
+    $(".type55.scene" + game.user.viewedScene).removeClass("hardHide");
+    $(".type55.scene" + viewedScene.id).not(".gm-roll-hidden").show();
   }
   else if (currentTab == "ic") {
     $(".type2.scene" + game.user.viewedScene).removeClass("hardHide");
@@ -341,20 +355,16 @@ Hooks.on("renderSceneConfig", (app, html, data) => {
 
   if (app.object.compendium) return;
 
-  if(app.object.data.flags["tabbed-chatlog"])
-  {
-    if (app.object.data.flags["tabbed-chatlog"].webhook)
-    {
+  if (app.object.data.flags["tabbed-chatlog"]) {
+    if (app.object.data.flags["tabbed-chatlog"].webhook) {
       loadedWebhookData = app.object.getFlag('tabbed-chatlog', 'webhook');
     }
-    else
-    {
+    else {
       app.object.setFlag('tabbed-chatlog', 'webhook', "");
       loadedWebhookData = "";
     }
   }
-  else
-  {
+  else {
     app.object.setFlag('tabbed-chatlog', 'webhook', "");
     loadedWebhookData = "";
   }
@@ -440,7 +450,7 @@ Hooks.on('init', () => {
 var TurndownService = (function () {
   'use strict';
 
-  function extend (destination) {
+  function extend(destination) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -450,7 +460,7 @@ var TurndownService = (function () {
     return destination
   }
 
-  function repeat (character, count) {
+  function repeat(character, count) {
     return Array(count + 1).join(character)
   }
 
@@ -463,7 +473,7 @@ var TurndownService = (function () {
     'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul'
   ];
 
-  function isBlock (node) {
+  function isBlock(node) {
     return blockElements.indexOf(node.nodeName.toLowerCase()) !== -1
   }
 
@@ -472,12 +482,12 @@ var TurndownService = (function () {
     'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'
   ];
 
-  function isVoid (node) {
+  function isVoid(node) {
     return voidElements.indexOf(node.nodeName.toLowerCase()) !== -1
   }
 
   var voidSelector = voidElements.join();
-  function hasVoid (node) {
+  function hasVoid(node) {
     return node.querySelector && node.querySelector(voidSelector)
   }
 
@@ -744,7 +754,7 @@ var TurndownService = (function () {
    * Manages a collection of rules used to convert HTML to Markdown
    */
 
-  function Rules (options) {
+  function Rules(options) {
     this.options = options;
     this._keep = [];
     this._remove = [];
@@ -800,7 +810,7 @@ var TurndownService = (function () {
     }
   };
 
-  function findRule (rules, node, options) {
+  function findRule(rules, node, options) {
     for (var i = 0; i < rules.length; i++) {
       var rule = rules[i];
       if (filterValue(rule, node, options)) return rule
@@ -808,7 +818,7 @@ var TurndownService = (function () {
     return void 0
   }
 
-  function filterValue (rule, node, options) {
+  function filterValue(rule, node, options) {
     var filter = rule.filter;
     if (typeof filter === 'string') {
       if (filter === node.nodeName.toLowerCase()) return true
@@ -853,7 +863,7 @@ var TurndownService = (function () {
    *
    * @param {Object} options
    */
-  function collapseWhitespace (options) {
+  function collapseWhitespace(options) {
     var element = options.element;
     var isBlock = options.isBlock;
     var isVoid = options.isVoid;
@@ -874,7 +884,7 @@ var TurndownService = (function () {
         var text = node.data.replace(/[ \r\n\t]+/g, ' ');
 
         if ((!prevText || / $/.test(prevText.data)) &&
-            !prevVoid && text[0] === ' ') {
+          !prevVoid && text[0] === ' ') {
           text = text.substr(1);
         }
 
@@ -925,7 +935,7 @@ var TurndownService = (function () {
    * @param {Node} node
    * @return {Node} node
    */
-  function remove (node) {
+  function remove(node) {
     var next = node.nextSibling || node.parentNode;
 
     node.parentNode.removeChild(node);
@@ -942,7 +952,7 @@ var TurndownService = (function () {
    * @param {Function} isPre
    * @return {Node}
    */
-  function next (prev, current, isPre) {
+  function next(prev, current, isPre) {
     if ((prev && prev.parentNode === current) || isPre(current)) {
       return current.nextSibling || current.parentNode
     }
@@ -960,7 +970,7 @@ var TurndownService = (function () {
    * Parsing HTML strings
    */
 
-  function canParseHTMLNatively () {
+  function canParseHTMLNatively() {
     var Parser = root.DOMParser;
     var canParse = false;
 
@@ -971,13 +981,13 @@ var TurndownService = (function () {
       if (new Parser().parseFromString('', 'text/html')) {
         canParse = true;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     return canParse
   }
 
-  function createHTMLParser () {
-    var Parser = function () {};
+  function createHTMLParser() {
+    var Parser = function () { };
 
     {
       if (shouldUseActiveX()) {
@@ -1002,7 +1012,7 @@ var TurndownService = (function () {
     return Parser
   }
 
-  function shouldUseActiveX () {
+  function shouldUseActiveX() {
     var useActiveX = false;
     try {
       document.implementation.createHTMLDocument('').open();
@@ -1014,7 +1024,7 @@ var TurndownService = (function () {
 
   var HTMLParser = canParseHTMLNatively() ? root.DOMParser : createHTMLParser();
 
-  function RootNode (input) {
+  function RootNode(input) {
     var root;
     if (typeof input === 'string') {
       var doc = htmlParser().parseFromString(
@@ -1038,12 +1048,12 @@ var TurndownService = (function () {
   }
 
   var _htmlParser;
-  function htmlParser () {
+  function htmlParser() {
     _htmlParser = _htmlParser || new HTMLParser();
     return _htmlParser
   }
 
-  function Node (node) {
+  function Node(node) {
     node.isBlock = isBlock(node);
     node.isCode = node.nodeName.toLowerCase() === 'code' || node.parentNode.isCode;
     node.isBlank = isBlank(node);
@@ -1051,7 +1061,7 @@ var TurndownService = (function () {
     return node
   }
 
-  function isBlank (node) {
+  function isBlank(node) {
     return (
       ['A', 'TH', 'TD', 'IFRAME', 'SCRIPT', 'AUDIO', 'VIDEO'].indexOf(node.nodeName) === -1 &&
       /^\s*$/i.test(node.textContent) &&
@@ -1060,7 +1070,7 @@ var TurndownService = (function () {
     )
   }
 
-  function flankingWhitespace (node) {
+  function flankingWhitespace(node) {
     var leading = '';
     var trailing = '';
 
@@ -1081,7 +1091,7 @@ var TurndownService = (function () {
     return { leading: leading, trailing: trailing }
   }
 
-  function isFlankedByWhitespace (side, node) {
+  function isFlankedByWhitespace(side, node) {
     var sibling;
     var regExp;
     var isFlanked;
@@ -1123,7 +1133,7 @@ var TurndownService = (function () {
     [/^(\d+)\. /g, '$1\\. ']
   ];
 
-  function TurndownService (options) {
+  function TurndownService(options) {
     if (!(this instanceof TurndownService)) return new TurndownService(options)
 
     var defaults = {
@@ -1256,7 +1266,7 @@ var TurndownService = (function () {
    * @type String
    */
 
-  function process (parentNode) {
+  function process(parentNode) {
     var self = this;
     return reduce.call(parentNode.childNodes, function (output, node) {
       node = new Node(node);
@@ -1280,7 +1290,7 @@ var TurndownService = (function () {
    * @type String
    */
 
-  function postProcess (output) {
+  function postProcess(output) {
     var self = this;
     this.rules.forEach(function (rule) {
       if (typeof rule.append === 'function') {
@@ -1299,7 +1309,7 @@ var TurndownService = (function () {
    * @type String
    */
 
-  function replacementForNode (node) {
+  function replacementForNode(node) {
     var rule = this.rules.forNode(node);
     var content = process.call(this, node);
     var whitespace = node.flankingWhitespace;
@@ -1320,7 +1330,7 @@ var TurndownService = (function () {
    * @type String
    */
 
-  function separatingNewlines (output, replacement) {
+  function separatingNewlines(output, replacement) {
     var newlines = [
       output.match(trailingNewLinesRegExp)[0],
       replacement.match(leadingNewLinesRegExp)[0]
@@ -1329,7 +1339,7 @@ var TurndownService = (function () {
     return maxNewlines.length < 2 ? maxNewlines : '\n\n'
   }
 
-  function join (string1, string2) {
+  function join(string1, string2) {
     var separator = separatingNewlines(string1, string2);
 
     // Remove trailing/leading newlines and replace with separator
@@ -1347,7 +1357,7 @@ var TurndownService = (function () {
    * @type String|Object|Array|Boolean|Number
    */
 
-  function canConvert (input) {
+  function canConvert(input) {
     return (
       input != null && (
         typeof input === 'string' ||

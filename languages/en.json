@@ -15,5 +15,6 @@
 
     "TC.TABS.IC": "In Character",
     "TC.TABS.OOC": "OOC",
-    "TC.TABS.Rolls": "Rolls"
+    "TC.TABS.Rolls": "Rolls",
+    "TC.TABS.Initiative": "Init"
 }
