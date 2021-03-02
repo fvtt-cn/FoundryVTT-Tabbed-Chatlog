@@ -1,19 +1,37 @@
 (() => { })();
 
-const CHAT_MESSAGE_TYPES = {
-    OTHER: 0,
-    OOC: 1,
-    IC: 2,
-    EMOTE: 3,
-    WHISPER: 4,
-    ROLL: 5
-};
+// const CHAT_MESSAGE_TYPES = {
+//     OTHER: 0,
+//     OOC: 1,
+//     IC: 2,
+//     EMOTE: 3,
+//     WHISPER: 4,
+//     ROLL: 5
+// };
 
 let currentTab = "ic";
 let salonEnabled = false;
 let turndown = undefined;
+let chatTabs = undefined;
+let sidebarCallback = undefined;
 
-Hooks.on("renderChatLog", async function (_chatLog, html, _user) {
+Hooks.on("renderSidebar", async function (sidebar) {
+    if (shouldHideDueToStreamView()) return;
+
+    const sidebarTabs = sidebar._tabs[0];
+    sidebarCallback = sidebarTabs.callback;
+    sidebarTabs.callback = (event, tabs, active) => {
+        if (sidebarCallback) {
+            sidebarCallback(event, tabs, active);
+        }
+
+        if (active === "chat" && chatTabs) {
+            chatTabs.activate(currentTab);
+        }
+    };
+});
+
+Hooks.on("renderChatLog", async function (_chatLog, html) {
     if (shouldHideDueToStreamView()) return;
 
     var toPrepend = "<nav class=\"tabbedchatlog tabs\">";
@@ -26,7 +44,7 @@ Hooks.on("renderChatLog", async function (_chatLog, html, _user) {
     const tabs = new TabsV2({
         navSelector: ".tabs",
         contentSelector: ".content",
-        initial: "tab1",
+        initial: currentTab,
         callback: function (_event, _html, tab) {
             currentTab = tab;
 
@@ -91,6 +109,8 @@ Hooks.on("renderChatLog", async function (_chatLog, html, _user) {
         }
     });
     tabs.bind(html[0]);
+
+    tabbed = tabs;
 });
 
 Hooks.on("renderChatMessage", (chatMessage, html, data) => {
@@ -160,7 +180,7 @@ Hooks.on("diceSoNiceRollComplete", (id) => {
     }
 });
 
-Hooks.on("createChatMessage", (chatMessage, _content) => {
+Hooks.on("createChatMessage", (chatMessage) => {
     var sceneMatches = true;
 
     if (chatMessage.data.speaker.scene) {
@@ -190,7 +210,7 @@ Hooks.on("createChatMessage", (chatMessage, _content) => {
     }
 });
 
-Hooks.on("preCreateChatMessage", (chatMessage, _content) => {
+Hooks.on("preCreateChatMessage", (chatMessage) => {
     if (game.settings.get("tabbed-chatlog-fvtt-cn", "icChatInOoc")) {
         if (currentTab == "ooc") {
             if (chatMessage.type == 2) {
@@ -269,7 +289,7 @@ function sendToDiscord(webhook, body) {
         type: "POST",
         url: webhook,
         data: JSON.stringify(body),
-        success: function (_data) { },
+        success: function () { },
         contentType: "application/json",
         dataType: "json"
     });
@@ -299,7 +319,7 @@ function generatePortraitImageElement(actor) {
     return img;
 }
 
-Hooks.on("renderSceneNavigation", (sceneNav, _html, _data) => {
+Hooks.on("renderSceneNavigation", (sceneNav) => {
     if (shouldHideDueToStreamView()) return;
 
     var viewedScene = sceneNav.scenes.find(x => x.isView);
@@ -322,7 +342,7 @@ Hooks.on("renderSceneNavigation", (sceneNav, _html, _data) => {
 });
 
 
-Hooks.on("renderSceneConfig", (app, html, _data) => {
+Hooks.on("renderSceneConfig", (app, html) => {
     let loadedWebhookData = undefined;
 
     if (app.object.compendium) return;
@@ -352,7 +372,7 @@ Hooks.on("renderSceneConfig", (app, html, _data) => {
 });
 
 
-Hooks.on("closeSceneConfig", (app, html, _data) => {
+Hooks.on("closeSceneConfig", (app, html) => {
     if (app.object.compendium) return;
 
     app.object.setFlag("tabbed-chatlog", "webhook", html.find("input[name ='scenewebhook']")[0].value);
@@ -425,6 +445,7 @@ var TurndownService = (function () {
         for (var i = 1; i < arguments.length; i++) {
             var source = arguments[i];
             for (var key in source) {
+                // eslint-disable-next-line no-prototype-builtins
                 if (source.hasOwnProperty(key)) destination[key] = source[key];
             }
         }
@@ -546,7 +567,7 @@ var TurndownService = (function () {
             );
         },
 
-        replacement: function (_content, node, _options) {
+        replacement: function (_content, node) {
             return (
                 "\n\n    " +
                 node.firstChild.textContent.replace(/\n/g, "\n    ") +
@@ -651,7 +672,7 @@ var TurndownService = (function () {
 
         references: [],
 
-        append: function (_options) {
+        append: function () {
             var references = "";
             if (this.references.length) {
                 references = "\n\n" + this.references.join("\n") + "\n\n";
@@ -947,7 +968,9 @@ var TurndownService = (function () {
             if (new Parser().parseFromString("", "text/html")) {
                 canParse = true;
             }
-        } catch (e) { }
+        } catch (e) {
+            // continue regardless of error
+        }
 
         return canParse;
     }
