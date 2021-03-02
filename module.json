@@ -1,8 +1,8 @@
 {
   "name": "tabbed-chatlog-fvtt-cn",
-  "title": "Tabbed Chatlog Init [FVTT-CN]",
+  "title": "Tabbed Chatlog Initiative [FVTT-CN]",
   "description": "Splits the Chatlog into In Character (per scene), Rolls (per scene), Out of Character (global) and Initiative (per scene).",
-  "version": "2.5.9",
+  "version": "2.6.0",
   "minimumCoreVersion": "0.6.2",
   "compatibleCoreVersion": "0.7.9",
   "author": "Cody Swendrowski <cody@swendrowski.us> & hmqgg <mitchx7@outlook.com>",
@@ -33,5 +33,5 @@
   ],
   "url": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog",
   "manifest": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog/releases/download/latest/module.json",
-  "download": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog/releases/download/2.5.9/module.zip"
+  "download": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog/releases/download/2.6.0/module.zip"
 }
