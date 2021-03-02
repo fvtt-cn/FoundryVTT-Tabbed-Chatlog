@@ -109,8 +109,7 @@ Hooks.on("renderChatLog", async function (_chatLog, html) {
         }
     });
     tabs.bind(html[0]);
-
-    tabbed = tabs;
+    chatTabs = tabs;
 });
 
 Hooks.on("renderChatMessage", (chatMessage, html, data) => {
