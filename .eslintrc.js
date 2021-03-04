@@ -25,6 +25,28 @@ module.exports = {
             "error",
             "always"
         ],
-        "no-undef": "off"
+        "no-undef": "off",
+        "no-extra-parens": [
+            "error"
+        ],
+        "curly": [
+            "error",
+            "all"
+        ],
+        "brace-style": [
+            "error",
+            "1tbs"
+        ],
+        "no-prototype-builtins": [
+            "off"
+        ],
+        "no-trailing-spaces": [
+            "error"
+        ],
+        "operator-linebreak": [
+            "error",
+            "after",
+            { "overrides": { "?": "before", ":": "before" } }
+        ]
     }
 };

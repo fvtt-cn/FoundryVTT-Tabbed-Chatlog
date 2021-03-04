@@ -16,7 +16,9 @@ let chatTabs = undefined;
 let sidebarCallback = undefined;
 
 Hooks.on("renderSidebar", async function (sidebar) {
-    if (shouldHideDueToStreamView()) return;
+    if (shouldHideDueToStreamView()) {
+        return;
+    }
 
     const sidebarTabs = sidebar._tabs[0];
     sidebarCallback = sidebarTabs.callback;
@@ -24,7 +26,6 @@ Hooks.on("renderSidebar", async function (sidebar) {
         if (sidebarCallback) {
             sidebarCallback(event, tabs, active);
         }
-
         if (active === "chat" && chatTabs) {
             chatTabs.activate(currentTab);
         }
@@ -32,7 +33,9 @@ Hooks.on("renderSidebar", async function (sidebar) {
 });
 
 Hooks.on("renderChatLog", async function (_chatLog, html) {
-    if (shouldHideDueToStreamView()) return;
+    if (shouldHideDueToStreamView()) {
+        return;
+    }
 
     var toPrepend = "<nav class=\"tabbedchatlog tabs\">";
     toPrepend += `<a class="item ic" data-tab="ic">${game.i18n.localize("TC.TABS.IC")}</a><i id="icNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
@@ -113,7 +116,9 @@ Hooks.on("renderChatLog", async function (_chatLog, html) {
 });
 
 Hooks.on("renderChatMessage", (chatMessage, html, data) => {
-    if (shouldHideDueToStreamView()) return;
+    if (shouldHideDueToStreamView()) {
+        return;
+    }
 
     html.addClass("type" + data.message.type + (data.message.flags.core?.initiativeRoll ? "5" : ""));
 
@@ -136,7 +141,9 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
         return;
     }
 
-    if (salonEnabled && chatMessage.data.type == 4) return;
+    if (salonEnabled && chatMessage.data.type == 4) {
+        return;
+    }
 
     if (currentTab == "rolls") {
         if (chatMessage.data.type == 0 && sceneMatches) {
@@ -144,7 +151,9 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
         } else if (data.message.type == 5 && sceneMatches && !data.message.flags.core?.initiativeRoll) {
             if (!html.hasClass("gm-roll-hidden")) {
                 if (game.dice3d && game.settings.get("dice-so-nice", "settings").enabled && game.settings.get("dice-so-nice", "enabled")) {
-                    if (!game.settings.get("dice-so-nice", "immediatelyDisplayChatMessages")) return;
+                    if (!game.settings.get("dice-so-nice", "immediatelyDisplayChatMessages")) {
+                        return;
+                    }
                 }
                 html.css("display", "list-item");
             }
@@ -201,7 +210,9 @@ Hooks.on("createChatMessage", (chatMessage) => {
             $("#icNotification").show();
         }
     } else {
-        if (salonEnabled && chatMessage.data.type == 4) return;
+        if (salonEnabled && chatMessage.data.type == 4) {
+            return;
+        }
 
         if (currentTab != "ooc") {
             $("#oocNotification").show();
@@ -214,7 +225,7 @@ Hooks.on("preCreateChatMessage", (chatMessage) => {
         if (currentTab == "ooc") {
             if (chatMessage.type == 2) {
                 chatMessage.type = 1;
-                delete (chatMessage.speaker);
+                delete chatMessage.speaker;
                 console.log(chatMessage);
             }
         }
@@ -300,7 +311,7 @@ function loadActorForChatMessage(speaker) {
         actor = game.actors.tokens[speaker.token];
     }
     if (!actor) {
-        actor = game.actors.get((speaker.actor));
+        actor = game.actors.get(speaker.actor);
     }
     if (!actor) {
         game.actors.forEach((value) => {
@@ -319,7 +330,9 @@ function generatePortraitImageElement(actor) {
 }
 
 Hooks.on("renderSceneNavigation", (sceneNav) => {
-    if (shouldHideDueToStreamView()) return;
+    if (shouldHideDueToStreamView()) {
+        return;
+    }
 
     var viewedScene = sceneNav.scenes.find(x => x.isView);
 
@@ -344,7 +357,9 @@ Hooks.on("renderSceneNavigation", (sceneNav) => {
 Hooks.on("renderSceneConfig", (app, html) => {
     let loadedWebhookData = undefined;
 
-    if (app.object.compendium) return;
+    if (app.object.compendium) {
+        return;
+    }
 
     if (app.object.data.flags["tabbed-chatlog"]) {
         if (app.object.data.flags["tabbed-chatlog"].webhook) {
@@ -372,7 +387,9 @@ Hooks.on("renderSceneConfig", (app, html) => {
 
 
 Hooks.on("closeSceneConfig", (app, html) => {
-    if (app.object.compendium) return;
+    if (app.object.compendium) {
+        return;
+    }
 
     app.object.setFlag("tabbed-chatlog", "webhook", html.find("input[name ='scenewebhook']")[0].value);
 });
@@ -444,8 +461,9 @@ var TurndownService = (function () {
         for (var i = 1; i < arguments.length; i++) {
             var source = arguments[i];
             for (var key in source) {
-                // eslint-disable-next-line no-prototype-builtins
-                if (source.hasOwnProperty(key)) destination[key] = source[key];
+                if (source.hasOwnProperty(key)) {
+                    destination[key] = source[key];
+                }
             }
         }
         return destination;
@@ -502,7 +520,7 @@ var TurndownService = (function () {
             var hLevel = Number(node.nodeName.charAt(1));
 
             if (options.headingStyle === "setext" && hLevel < 3) {
-                var underline = repeat((hLevel === 1 ? "=" : "-"), content.length);
+                var underline = repeat(hLevel === 1 ? "=" : "-", content.length);
                 return (
                     "\n\n" + content + "\n" + underline + "\n\n"
                 );
@@ -595,7 +613,7 @@ var TurndownService = (function () {
             var fenceInCodeRegex = new RegExp("^" + fenceChar + "{3,}", "gm");
 
             var match;
-            while ((match = fenceInCodeRegex.exec(code))) {
+            while ((match = fenceInCodeRegex.exec(code)) !== null) {
                 if (match[0].length >= fenceSize) {
                     fenceSize = match[0].length + 1;
                 }
@@ -685,7 +703,9 @@ var TurndownService = (function () {
         filter: ["em", "i"],
 
         replacement: function (content, _node, options) {
-            if (!content.trim()) return "";
+            if (!content.trim()) {
+                return "";
+            }
             return options.emDelimiter + content + options.emDelimiter;
         }
     };
@@ -694,7 +714,9 @@ var TurndownService = (function () {
         filter: ["strong", "b"],
 
         replacement: function (content, _node, options) {
-            if (!content.trim()) return "";
+            if (!content.trim()) {
+                return "";
+            }
             return options.strongDelimiter + content + options.strongDelimiter;
         }
     };
@@ -708,16 +730,24 @@ var TurndownService = (function () {
         },
 
         replacement: function (content) {
-            if (!content.trim()) return "";
+            if (!content.trim()) {
+                return "";
+            }
 
             var delimiter = "`";
             var leadingSpace = "";
             var trailingSpace = "";
             var matches = content.match(/`+/gm);
             if (matches) {
-                if (/^`/.test(content)) leadingSpace = " ";
-                if (/`$/.test(content)) trailingSpace = " ";
-                while (matches.indexOf(delimiter) !== -1) delimiter = delimiter + "`";
+                if (/^`/.test(content)) {
+                    leadingSpace = " ";
+                }
+                if (/`$/.test(content)) {
+                    trailingSpace = " ";
+                }
+                while (matches.indexOf(delimiter) !== -1) {
+                    delimiter = delimiter + "`";
+                }
             }
 
             return delimiter + leadingSpace + content + trailingSpace + delimiter;
@@ -756,7 +786,9 @@ var TurndownService = (function () {
         };
 
         this.array = [];
-        for (var key in options.rules) this.array.push(options.rules[key]);
+        for (var key in options.rules) {
+            this.array.push(options.rules[key]);
+        }
     }
 
     Rules.prototype = {
@@ -781,25 +813,37 @@ var TurndownService = (function () {
         },
 
         forNode: function (node) {
-            if (node.isBlank) return this.blankRule;
+            if (node.isBlank) {
+                return this.blankRule;
+            }
             var rule;
 
-            if ((rule = findRule(this.array, node, this.options))) return rule;
-            if ((rule = findRule(this._keep, node, this.options))) return rule;
-            if ((rule = findRule(this._remove, node, this.options))) return rule;
+            if ((rule = findRule(this.array, node, this.options)) !== null) {
+                return rule;
+            }
+            if ((rule = findRule(this._keep, node, this.options)) !== null) {
+                return rule;
+            }
+            if ((rule = findRule(this._remove, node, this.options)) !== null) {
+                return rule;
+            }
 
             return this.defaultRule;
         },
 
         forEach: function (fn) {
-            for (var i = 0; i < this.array.length; i++) fn(this.array[i], i);
+            for (var i = 0; i < this.array.length; i++) {
+                fn(this.array[i], i);
+            }
         }
     };
 
     function findRule(rules, node, options) {
         for (var i = 0; i < rules.length; i++) {
             var rule = rules[i];
-            if (filterValue(rule, node, options)) return rule;
+            if (filterValue(rule, node, options)) {
+                return rule;
+            }
         }
         return void 0;
     }
@@ -807,11 +851,17 @@ var TurndownService = (function () {
     function filterValue(rule, node, options) {
         var filter = rule.filter;
         if (typeof filter === "string") {
-            if (filter === node.nodeName.toLowerCase()) return true;
+            if (filter === node.nodeName.toLowerCase()) {
+                return true;
+            }
         } else if (Array.isArray(filter)) {
-            if (filter.indexOf(node.nodeName.toLowerCase()) > -1) return true;
+            if (filter.indexOf(node.nodeName.toLowerCase()) > -1) {
+                return true;
+            }
         } else if (typeof filter === "function") {
-            if (filter.call(rule, node, options)) return true;
+            if (filter.call(rule, node, options)) {
+                return true;
+            }
         } else {
             throw new TypeError("`filter` needs to be a string, array, or function");
         }
@@ -857,7 +907,9 @@ var TurndownService = (function () {
             return node.nodeName === "PRE";
         };
 
-        if (!element.firstChild || isPre(element)) return;
+        if (!element.firstChild || isPre(element)) {
+            return;
+        }
 
         var prevText = null;
         var prevVoid = false;
@@ -939,7 +991,7 @@ var TurndownService = (function () {
      * @return {Node}
      */
     function next(prev, current, isPre) {
-        if ((prev && prev.parentNode === current) || isPre(current)) {
+        if (prev && prev.parentNode === current || isPre(current)) {
             return current.nextSibling || current.parentNode;
         }
 
@@ -950,7 +1002,7 @@ var TurndownService = (function () {
      * Set up window for Node.js
      */
 
-    var root = (typeof window !== "undefined" ? window : {});
+    var root = typeof window !== "undefined" ? window : {};
 
     /*
      * Parsing HTML strings
@@ -1005,7 +1057,9 @@ var TurndownService = (function () {
         try {
             document.implementation.createHTMLDocument("").open();
         } catch (e) {
-            if (window.ActiveXObject) useActiveX = true;
+            if (window.ActiveXObject) {
+                useActiveX = true;
+            }
         }
         return useActiveX;
     }
@@ -1125,7 +1179,9 @@ var TurndownService = (function () {
     ];
 
     function TurndownService(options) {
-        if (!(this instanceof TurndownService)) return new TurndownService(options);
+        if (!(this instanceof TurndownService)) {
+            return new TurndownService(options);
+        }
 
         var defaults = {
             rules: rules,
@@ -1169,7 +1225,9 @@ var TurndownService = (function () {
                 );
             }
 
-            if (input === "") return "";
+            if (input === "") {
+                return "";
+            }
 
             var output = process.call(this, new RootNode(input));
             return postProcess.call(this, output);
@@ -1185,7 +1243,9 @@ var TurndownService = (function () {
 
         use: function (plugin) {
             if (Array.isArray(plugin)) {
-                for (var i = 0; i < plugin.length; i++) this.use(plugin[i]);
+                for (var i = 0; i < plugin.length; i++) {
+                    this.use(plugin[i]);
+                }
             } else if (typeof plugin === "function") {
                 plugin(this);
             } else {
@@ -1304,7 +1364,9 @@ var TurndownService = (function () {
         var rule = this.rules.forNode(node);
         var content = process.call(this, node);
         var whitespace = node.flankingWhitespace;
-        if (whitespace.leading || whitespace.trailing) content = content.trim();
+        if (whitespace.leading || whitespace.trailing) {
+            content = content.trim();
+        }
         return (
             whitespace.leading +
             rule.replacement(content, node, this.options) +
@@ -1351,9 +1413,9 @@ var TurndownService = (function () {
         return (
             input != null && (
                 typeof input === "string" ||
-                (input.nodeType && (
+                input.nodeType && (
                     input.nodeType === 1 || input.nodeType === 9 || input.nodeType === 11
-                ))
+                )
             )
         );
     }
