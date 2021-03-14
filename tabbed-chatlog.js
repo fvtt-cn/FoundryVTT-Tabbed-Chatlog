@@ -9,381 +9,32 @@
 //     ROLL: 5
 // };
 
-let currentTab = "ic";
-let turndown = undefined;
-let chatTabs = undefined;
-let sidebarCallback = undefined;
-let hideInStreamView = true;
+var currentTab = "ic";
+var turndown = undefined;
+var chatTabs = undefined;
+var sidebarCallback = undefined;
+var shouldHide = true;
+var icChatInOoc = false;
+var icBackupWebhook = undefined;
 
-Hooks.on("renderSidebar", async function (sidebar) {
-    if (shouldHide()) {
-        return;
-    }
-
-    const sidebarTabs = sidebar._tabs[0];
-    sidebarCallback = sidebarTabs.callback;
-    sidebarTabs.callback = (event, tabs, active) => {
-        if (sidebarCallback) {
-            sidebarCallback(event, tabs, active);
-        }
-        if (active === "chat" && chatTabs) {
-            chatTabs.activate(currentTab);
-        }
-    };
-});
-
-Hooks.on("renderChatLog", async function (_chatLog, html) {
-    if (shouldHide()) {
-        return;
-    }
-
-    var toPrepend = "<nav class=\"tabbedchatlog tabs\">";
-    toPrepend += `<a class="item ic" data-tab="ic">${game.i18n.localize("TC.TABS.IC")}</a><i id="icNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
-    toPrepend += `<a class="item rolls" data-tab="rolls">${game.i18n.localize("TC.TABS.Rolls")}</a><i id="rollsNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
-    toPrepend += `<a class="item ooc" data-tab="ooc">${game.i18n.localize("TC.TABS.OOC")}</a><i id="oocNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>`;
-    toPrepend += `<a class="item init" data-tab="init">${game.i18n.localize("TC.TABS.Initiative")}</a></nav>`;
-    html.prepend(toPrepend);
-
-    const tabs = new TabsV2({
-        navSelector: ".tabs",
-        contentSelector: ".content",
-        initial: currentTab,
-        callback: function (_event, _html, tab) {
-            currentTab = tab;
-
-            if (tab == "rolls") {
-                $(".type0").removeClass("hardHide");
-                $(".type0").show();
-                $(".type1").hide();
-                $(".type2").hide();
-                $(".type3").hide();
-                $(".type4").hide();
-                $(".type5").removeClass("hardHide");
-                $(".type5").not(".gm-roll-hidden").show();
-                $(".type55").hide();
-
-                $("#rollsNotification").hide();
-            } else if (tab == "ic") {
-                $(".type1").hide();
-                $(".type2.scene" + game.user.viewedScene).removeClass("hardHide");
-                $(".type2.scene" + game.user.viewedScene).show();
-                $(".type2").not(".scenespecific").show();
-                $(".type3.scene" + game.user.viewedScene).removeClass("hardHide");
-                $(".type3.scene" + game.user.viewedScene).show();
-                $(".type3").not(".scenespecific").show();
-                $(".type4").hide();
-
-                $(".type0").hide();
-                $(".type5").hide();
-                $(".type55").hide();
-
-                $("#icNotification").hide();
-            } else if (tab == "ooc") {
-                $(".type1").removeClass("hardHide");
-                $(".type1").show();
-                $(".type2").hide();
-                $(".type3").hide();
-
-                $(".type0").hide();
-                $(".type4").removeClass("hardHide");
-                $(".type4").show();
-                $(".type5").hide();
-                $(".type55").hide();
-
-                $("#oocNotification").hide();
-            } else if (tab == "init") {
-                $(".type0").hide();
-                $(".type1").hide();
-                $(".type2").hide();
-                $(".type3").hide();
-                $(".type4").hide();
-                $(".type5").hide();
-                $(".type55").removeClass("hardHide");
-                $(".type55").not(".gm-roll-hidden").show();
-            } else {
-                console.log("Unknown tab " + tab + "!");
-            }
-
-            $("#chat-log").scrollTop(9999999);
-        }
-    });
-    tabs.bind(html[0]);
-    chatTabs = tabs;
-});
-
-Hooks.on("renderChatMessage", (chatMessage, html, data) => {
-    if (shouldHide(html.parent())) {
-        return;
-    }
-
-    html.addClass("type" + data.message.type + (data.message.flags.core?.initiativeRoll ? "5" : ""));
-
-    var sceneMatches = true;
-
-    if (data.message.type == 0 || data.message.type == 2 || data.message.type == 3 || data.message.type == 5) {
-        if (data.message.speaker.scene != undefined) {
-            html.addClass("scenespecific");
-            html.addClass("scene" + data.message.speaker.scene);
-            if (data.message.speaker.scene != game.user.viewedScene) {
-                sceneMatches = false;
-            }
-        }
-    }
-
-    if (currentTab == "rolls") {
-        if (chatMessage.data.type == 0 && sceneMatches) {
-            html.css("display", "list-item");
-        } else if (data.message.type == 5 && sceneMatches && !data.message.flags.core?.initiativeRoll) {
-            if (!html.hasClass("gm-roll-hidden")) {
-                if (game.dice3d && game.settings.get("dice-so-nice", "settings").enabled && game.settings.get("dice-so-nice", "enabled")) {
-                    if (!game.settings.get("dice-so-nice", "immediatelyDisplayChatMessages")) {
-                        return;
-                    }
-                }
-                html.css("display", "list-item");
-            }
-        } else {
-            html.css("display", "none");
-        }
-    } else if (currentTab == "init") {
-        if (data.message.type == 5 && sceneMatches && !html.hasClass("gm-roll-hidden") && data.message.flags.core?.initiativeRoll) {
-            html.css("display", "list-item");
-        } else {
-            html.css("display", "none");
-        }
-    } else if (currentTab == "ic") {
-        if ((data.message.type == 2 || data.message.type == 3) && sceneMatches) {
-            html.css("display", "list-item");
-        } else {
-            html.css("cssText", "display: none !important;");
-            html.addClass("hardHide");
-        }
-    } else if (currentTab == "ooc") {
-        if (data.message.type == 1 || data.message.type == 4) {
-            html.css("display", "list-item");
-        } else {
-            html.css("display", "none");
-        }
-    }
-});
-
-Hooks.on("diceSoNiceRollComplete", (id) => {
-    if (currentTab != "rolls") {
-        $("#chat-log .message[data-message-id=" + id + "]").css("display", "none");
-    }
-});
-
-Hooks.on("createChatMessage", (chatMessage) => {
-    var sceneMatches = true;
-
-    if (chatMessage.data.speaker.scene) {
-        if (chatMessage.data.speaker.scene != game.user.viewedScene) {
-            sceneMatches = false;
-        }
-    }
-
-    if (chatMessage.data.type == 0) {
-        if (currentTab != "rolls" && sceneMatches) {
-            $("#rollsNotification").show();
-        }
-    } else if (chatMessage.data.type == 5) {
-        if (currentTab != "rolls" && sceneMatches && chatMessage.data.whisper.length == 0 && !chatMessage.data.flags.core?.initiativeRoll) {
-            $("#rollsNotification").show();
-        }
-    } else if (chatMessage.data.type == 2 || chatMessage.data.type == 3) {
-        if (currentTab != "ic" && sceneMatches) {
-            $("#icNotification").show();
-        }
-    } else if (currentTab != "ooc") {
-        $("#oocNotification").show();
-    }
-});
-
-Hooks.on("preCreateChatMessage", (chatMessage) => {
-    if (game.settings.get("tabbed-chatlog-fvtt-cn", "icChatInOoc")) {
-        if (currentTab == "ooc") {
-            if (chatMessage.type == 2) {
-                chatMessage.type = 1;
-                delete chatMessage.speaker;
-                console.log(chatMessage);
-            }
-        }
-    }
-
-    if (chatMessage.type == 0 || chatMessage.type == 5) {
-        //..
-    } else if (chatMessage.type == 2 || chatMessage.type == 3) {
-        try {
-            let scene = game.scenes.get(chatMessage.speaker.scene);
-            let webhook = scene.getFlag("tabbed-chatlog", "webhook");
-
-            if (webhook == undefined || webhook == "") {
-                webhook = game.settings.get("tabbed-chatlog-fvtt-cn", "icBackupWebhook");
-            }
-
-            if (webhook == undefined || webhook == "") {
-                return;
-            }
-
-            let speaker = chatMessage.speaker;
-            var actor = loadActorForChatMessage(speaker);
-            let img = "";
-            let name = "";
-            if (actor) {
-                img = generatePortraitImageElement(actor);
-                name = actor.name;
-            } else {
-                img = game.users.get(chatMessage.user).avatar;
-                name = speaker.alias;
-            }
-
-            img = game.data.addresses.remote + "/" + img;
-
-            if (!chatMessage.whisper?.length) {
-                sendToDiscord(webhook, {
-                    content: turndown.turndown(chatMessage.content),
-                    username: name,
-                    avatar_url: img
-                });
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    } else {
-        try {
-            let webhook = game.settings.get("tabbed-chatlog-fvtt-cn", "oocWebhook");
-
-            if (webhook == undefined || webhook == "") {
-                return;
-            }
-
-            let img = game.users.get(chatMessage.user).avatar;
-            img = game.data.addresses.remote + "/" + img;
-
-            if (!chatMessage.whisper?.length) {
-                sendToDiscord(webhook, {
-                    content: turndown.turndown(chatMessage.content),
-                    username: game.users.get(chatMessage.user).name,
-                    avatar_url: img
-                });
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    }
-});
-
-function sendToDiscord(webhook, body) {
-    $.ajax({
-        type: "POST",
-        url: webhook,
-        data: JSON.stringify(body),
-        success: function () { },
-        contentType: "application/json",
-        dataType: "json"
-    });
-}
-
-function loadActorForChatMessage(speaker) {
-    var actor;
-    if (speaker.token) {
-        actor = game.actors.tokens[speaker.token];
-    }
-    if (!actor) {
-        actor = game.actors.get(speaker.actor);
-    }
-    if (!actor) {
-        game.actors.forEach((value) => {
-            if (value.name === speaker.alias) {
-                actor = value;
-            }
-        });
-    }
-    return actor;
-}
-
-function generatePortraitImageElement(actor) {
-    let img = "";
-    img = actor.token ? actor.token.data.img : actor.data.token.img;
-    return img;
-}
-
-Hooks.on("renderSceneNavigation", (sceneNav) => {
-    if (shouldHide()) {
-        return;
-    }
-
-    var viewedScene = sceneNav.scenes.find(x => x.isView);
-
-    $(".scenespecific").hide();
-    if (currentTab == "rolls") {
-        $(".type0.scene" + game.user.viewedScene).removeClass("hardHide");
-        $(".type0.scene" + viewedScene.id).show();
-        $(".type5.scene" + game.user.viewedScene).removeClass("hardHide");
-        $(".type5.scene" + viewedScene.id).not(".gm-roll-hidden").show();
-    } else if (currentTab == "init") {
-        $(".type55.scene" + game.user.viewedScene).removeClass("hardHide");
-        $(".type55.scene" + viewedScene.id).not(".gm-roll-hidden").show();
-    } else if (currentTab == "ic") {
-        $(".type2.scene" + game.user.viewedScene).removeClass("hardHide");
-        $(".type2.scene" + viewedScene.id).show();
-        $(".type3.scene" + game.user.viewedScene).removeClass("hardHide");
-        $(".type3.scene" + viewedScene.id).show();
-    }
-});
-
-
-Hooks.on("renderSceneConfig", (app, html) => {
-    let loadedWebhookData = undefined;
-
-    if (app.object.compendium) {
-        return;
-    }
-
-    if (app.object.data.flags["tabbed-chatlog"]) {
-        if (app.object.data.flags["tabbed-chatlog"].webhook) {
-            loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
-        } else {
-            app.object.setFlag("tabbed-chatlog", "webhook", "");
-            loadedWebhookData = "";
-        }
-    } else {
-        app.object.setFlag("tabbed-chatlog", "webhook", "");
-        loadedWebhookData = "";
-    }
-
-    const fxHtml = `
-  <div class="form-group">
-      <label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhookName")}</label>
-      <input id="scenewebhook" type="text" name="scenewebhook" value="${loadedWebhookData}" placeholder="Webhook"}>
-      <p class="notes">${game.i18n.localize("TC.SETTINGS.IcSceneWebhookHint")}</p>
-  </div>
-  `;
-    const fxFind = html.find("select[name ='journal']");
-    const formGroup = fxFind.closest(".form-group");
-    formGroup.after(fxHtml);
-});
-
-
-Hooks.on("closeSceneConfig", (app, html) => {
-    if (app.object.compendium) {
-        return;
-    }
-
-    app.object.setFlag("tabbed-chatlog", "webhook", html.find("input[name ='scenewebhook']")[0].value);
-});
+const tabTypeMap = new Map([
+    [ "0", "rolls" ],
+    [ "1", "ooc" ],
+    [ "2", "ic" ],
+    [ "3", "ic" ],
+    [ "4", "ooc" ],
+    [ "5", "rolls" ],
+    [ "5i", "init" ]
+]);
 
 Hooks.on("ready", () => {
-    if (window.NarratorTools !== undefined) {
+    // NarratorTools messages show in IC chat if not modified before.
+    if (NarratorTools?._msgtype === 0) {
         NarratorTools._msgtype = 2;
     }
 
     turndown = new TurndownService();
 });
-
-function shouldHide() {
-    return hideInStreamView;
-}
 
 Hooks.on("init", () => {
     game.settings.register("tabbed-chatlog-fvtt-cn", "oocWebhook", {
@@ -422,9 +73,287 @@ Hooks.on("init", () => {
         type: Boolean,
     });
 
-    hideInStreamView = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
+    shouldHide = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
+    icChatInOoc = game.settings.get("tabbed-chatlog-fvtt-cn", "icChatInOoc");
+    icBackupWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "icBackupWebhook");
 });
 
+Hooks.on("renderSidebar", async function (sidebar) {
+    if (shouldHide) {
+        return;
+    }
+
+    const sidebarTabs = sidebar._tabs[0];
+    sidebarCallback = sidebarTabs.callback;
+    sidebarTabs.callback = (event, tabs, active) => {
+        if (sidebarCallback) {
+            sidebarCallback(event, tabs, active);
+        }
+        if (active === "chat" && chatTabs) {
+            chatTabs.activate(currentTab);
+        }
+    };
+});
+
+Hooks.on("renderChatLog", async function (_chatLog, html) {
+    if (shouldHide) {
+        return;
+    }
+
+    const tabHeader = `
+    <nav class="tabbedchatlog tabs">
+        <a class="item ic" data-tab="ic">
+            ${game.i18n.localize("TC.TABS.IC")}
+        </a>
+        <i id="icNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
+
+        <a class="item rolls" data-tab="rolls">
+            ${game.i18n.localize("TC.TABS.Rolls")}
+        </a>
+        <i id="rollsNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
+
+        <a class="item ooc" data-tab="ooc">
+            ${game.i18n.localize("TC.TABS.OOC")}
+        </a>
+        <i id="oocNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
+
+        <a class="item init" data-tab="init">
+            ${game.i18n.localize("TC.TABS.Initiative")}
+        </a>
+    </nav>
+    `;
+    html.prepend(tabHeader);
+
+    const tabs = new TabsV2({
+        navSelector: ".tabs",
+        contentSelector: ".content",
+        initial: currentTab,
+        callback: function (_event, _html, tab) {
+            currentTab = tab;
+            refreshLogs();
+            $("#chat-log").scrollTop(9999999);
+        }
+    });
+    tabs.bind(html[0]);
+    chatTabs = tabs;
+});
+
+Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
+    if (shouldHide) {
+        return;
+    }
+
+    const key = String(data.message.type) + (data.message.flags.core?.initiativeRoll ? "i" : "");
+    const msgtype = `msgtype-${key}`;
+    html.addClass(msgtype);
+
+    if (currentTab === tabTypeMap.get(key)) {
+        html.css("display", "list-item");
+    } else {
+        html.css("display", "none");
+    }
+});
+
+Hooks.on("createChatMessage", (chatMessage) => {
+    switch (chatMessage.data.type) {
+        case 0:
+            if (currentTab != "rolls") {
+                $("#rollsNotification").show();
+            }
+            break;
+        case 5:
+            if (currentTab != "rolls" && chatMessage.data.whisper.length == 0 && !chatMessage.data.flags.core?.initiativeRoll) {
+                $("#rollsNotification").show();
+            }
+            break;
+        case 1:
+        case 4:
+            if (currentTab != "ooc") {
+                $("#oocNotification").show();
+            }
+            break;
+        case 2:
+        case 3:
+            if (currentTab != "ic") {
+                $("#icNotification").show();
+            }
+            break;
+    }
+});
+
+Hooks.on("preCreateChatMessage", (chatMessage) => {
+    // IC in OOC.
+    if (icChatInOoc && currentTab == "ooc" && chatMessage.type == 2) {
+        chatMessage.type = 1;
+        delete chatMessage.speaker;
+    }
+
+    // Send discord webhook messages.
+    if ((chatMessage.type ===  2 || chatMessage.type === 3) && !chatMessage.whisper?.length) {
+        try {
+            const scene = game.scenes.get(chatMessage.speaker.scene);
+            const webhook = scene.getFlag("tabbed-chatlog", "webhook") || icBackupWebhook;
+            if (webhook) {
+                const speaker = chatMessage.speaker;
+                const actor = loadActorForChatMessage(speaker);
+                const img = actor
+                    ? `${game.data.addresses.remote}/${generatePortraitImageElement(actor)}`
+                    : `${game.data.addresses.remote}/${game.users.get(chatMessage.user).avatar}`;
+                const name = actor ? actor.name : speaker.alias;
+                sendToDiscord(webhook, {
+                    content: turndown.turndown(chatMessage.content),
+                    username: name,
+                    avatar_url: img
+                });
+            }
+        } catch (err) {
+            console.log("TabbedChatlog | Failed to send Discord IC webhook message", err);
+        }
+    } else if ((chatMessage.type == 1 || chatMessage.type == 4) && !chatMessage.whisper?.length) {
+        try {
+            const webhook = game.settings.get("tabbed-chatlog-fvtt-cn", "oocWebhook");
+            if (webhook) {
+                const u = game.users.get(chatMessage.user);
+                const img = `${game.data.addresses.remote}/${u.avatar}`;
+                const name = u.name;
+                sendToDiscord(webhook, {
+                    content: turndown.turndown(chatMessage.content),
+                    username: name,
+                    avatar_url: img
+                });
+            }
+        } catch (error) {
+            console.log("TabbedChatlog | Failed to send Discord OOC webhook message", err);
+        }
+    }
+});
+
+Hooks.on("renderSceneConfig", (app, html) => {
+    if (app.object.compendium) {
+        return;
+    }
+
+    let loadedWebhookData = undefined;
+    if (app.object.data.flags["tabbed-chatlog"] && app.object.data.flags["tabbed-chatlog"].webhook) {
+        loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
+    } else {
+        app.object.setFlag("tabbed-chatlog", "webhook", "");
+        loadedWebhookData = "";
+    }
+
+    const fxHtml = `
+    <div class="form-group">
+        <label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhookName")}</label>
+        <input id="scenewebhook" type="text" name="scenewebhook" value="${loadedWebhookData}" placeholder="Webhook"}>
+        <p class="notes">${game.i18n.localize("TC.SETTINGS.IcSceneWebhookHint")}</p>
+    </div>
+    `;
+    const fxFind = html.find("select[name ='journal']");
+    const formGroup = fxFind.closest(".form-group");
+    formGroup.after(fxHtml);
+});
+
+
+Hooks.on("closeSceneConfig", (app, html) => {
+    if (app.object.compendium) {
+        return;
+    }
+
+    app.object.setFlag("tabbed-chatlog", "webhook", html.find("input[name ='scenewebhook']")[0].value);
+});
+
+function refreshLogs() {
+    switch (currentTab) {
+        case "ic":
+            $("#chat-log .msgtype-2").toggleClass("forceHide", false);
+            $("#chat-log .msgtype-3").toggleClass("forceHide", false);
+            $("#icNotification").hide();
+
+            $("#chat-log .msgtype-0").hide();
+            $("#chat-log .msgtype-1").hide();
+            $("#chat-log .msgtype-2").show();
+            $("#chat-log .msgtype-3").show();
+            $("#chat-log .msgtype-4").hide();
+            $("#chat-log .msgtype-5").hide();
+            $("#chat-log .msgtype-5i").hide();
+            break;
+        case "rolls":
+            $("#chat-log .msgtype-0").toggleClass("forceHide", false);
+            $("#chat-log .msgtype-5").toggleClass("forceHide", false);
+            $("#rollsNotification").hide();
+
+            $("#chat-log .msgtype-0").show();
+            $("#chat-log .msgtype-1").hide();
+            $("#chat-log .msgtype-2").hide();
+            $("#chat-log .msgtype-3").hide();
+            $("#chat-log .msgtype-4").hide();
+            $("#chat-log .msgtype-5").not(".gm-roll-hidden").show();
+            $("#chat-log .msgtype-5i").hide();
+            break;
+        case "ooc":
+            $("#chat-log .msgtype-1").toggleClass("forceHide", false);
+            $("#chat-log .msgtype-4").toggleClass("forceHide", false);
+            $("#oocNotification").hide();
+
+            $("#chat-log .msgtype-0").hide();
+            $("#chat-log .msgtype-1").show();
+            $("#chat-log .msgtype-2").hide();
+            $("#chat-log .msgtype-3").hide();
+            $("#chat-log .msgtype-4").show();
+            $("#chat-log .msgtype-5").hide();
+            $("#chat-log .msgtype-5i").hide();
+            break;
+        case "init":
+            $("#chat-log .msgtype-5i").toggleClass("forceHide", false);
+
+            $("#chat-log .msgtype-0").hide();
+            $("#chat-log .msgtype-1").hide();
+            $("#chat-log .msgtype-2").hide();
+            $("#chat-log .msgtype-3").hide();
+            $("#chat-log .msgtype-4").hide();
+            $("#chat-log .msgtype-5").hide();
+            $("#chat-log .msgtype-5i").not(".gm-roll-hidden").show();
+            break;
+        default:
+            console.log(`TabbedChatlog | Unknown tab ${currentTab}`);
+            break;
+    }
+}
+
+function sendToDiscord(webhook, body) {
+    $.ajax({
+        type: "POST",
+        url: webhook,
+        data: JSON.stringify(body),
+        success: function () { },
+        contentType: "application/json",
+        dataType: "json"
+    });
+}
+
+function loadActorForChatMessage(speaker) {
+    let actor = undefined;
+    if (speaker.token) {
+        actor = game.actors.tokens[speaker.token];
+    }
+    if (!actor) {
+        actor = game.actors.get(speaker.actor);
+    }
+    if (!actor) {
+        game.actors.forEach((value) => {
+            if (value.name === speaker.alias) {
+                actor = value;
+            }
+        });
+    }
+    return actor;
+}
+
+function generatePortraitImageElement(actor) {
+    let img = "";
+    img = actor.token ? actor.token.data.img : actor.data.token.img;
+    return img;
+}
 
 //#region Turndown
 
@@ -643,18 +572,18 @@ var TurndownService = (function () {
             var reference;
 
             switch (options.linkReferenceStyle) {
-            case "collapsed":
-                replacement = "[" + content + "][]";
-                reference = "[" + content + "]: " + href + title;
-                break;
-            case "shortcut":
-                replacement = "[" + content + "]";
-                reference = "[" + content + "]: " + href + title;
-                break;
-            default:
-                var id = this.references.length + 1;
-                replacement = "[" + content + "][" + id + "]";
-                reference = "[" + id + "]: " + href + title;
+                case "collapsed":
+                    replacement = "[" + content + "][]";
+                    reference = "[" + content + "]: " + href + title;
+                    break;
+                case "shortcut":
+                    replacement = "[" + content + "]";
+                    reference = "[" + content + "]: " + href + title;
+                    break;
+                default:
+                    var id = this.references.length + 1;
+                    replacement = "[" + content + "][" + id + "]";
+                    reference = "[" + id + "]: " + href + title;
             }
 
             this.references.push(reference);

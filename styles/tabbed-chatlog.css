@@ -17,23 +17,35 @@
     height: 18px;
 }
 
-.type0 {
+#chat-log .msgtype-0 {
     display: none;
 }
 
-.type1 {
+#chat-log .msgtype-1 {
     display: none;
 }
 
-.type4 {
+#chat-log .msgtype-2 {
     display: none;
 }
 
-.type5 {
+#chat-log .msgtype-3 {
     display: none;
 }
 
-.hardHide {
+#chat-log .msgtype-4 {
+    display: none;
+}
+
+#chat-log .msgtype-5 {
+    display: none;
+}
+
+#chat-log .msgtype-5i {
+    display: none;
+}
+
+#chat-log .forceHide {
     display: none !important;
 }
 
