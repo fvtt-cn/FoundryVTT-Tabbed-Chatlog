@@ -17,31 +17,7 @@
     height: 18px;
 }
 
-#chat-log .msgtype-0 {
-    display: none;
-}
-
-#chat-log .msgtype-1 {
-    display: none;
-}
-
-#chat-log .msgtype-2 {
-    display: none;
-}
-
-#chat-log .msgtype-3 {
-    display: none;
-}
-
-#chat-log .msgtype-4 {
-    display: none;
-}
-
-#chat-log .msgtype-5 {
-    display: none;
-}
-
-#chat-log .msgtype-5i {
+#chat-log .normalHide {
     display: none;
 }
 

@@ -16,6 +16,7 @@ var sidebarCallback = undefined;
 var shouldHide = true;
 var icChatInOoc = false;
 var icBackupWebhook = undefined;
+var oocWebhook = undefined;
 
 const tabTypeMap = new Map([
     [ "0", "rolls" ],
@@ -44,6 +45,7 @@ Hooks.on("init", () => {
         config: true,
         default: "",
         type: String,
+        onChange: value => oocWebhook = value,
     });
 
     game.settings.register("tabbed-chatlog-fvtt-cn", "icBackupWebhook", {
@@ -53,6 +55,7 @@ Hooks.on("init", () => {
         config: true,
         default: "",
         type: String,
+        onChange: value => icBackupWebhook = value,
     });
 
     game.settings.register("tabbed-chatlog-fvtt-cn", "icChatInOoc", {
@@ -62,6 +65,7 @@ Hooks.on("init", () => {
         config: true,
         default: true,
         type: Boolean,
+        onChange: value => icChatInOoc = value,
     });
 
     game.settings.register("tabbed-chatlog-fvtt-cn", "hideInStreamView", {
@@ -76,6 +80,7 @@ Hooks.on("init", () => {
     shouldHide = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
     icChatInOoc = game.settings.get("tabbed-chatlog-fvtt-cn", "icChatInOoc");
     icBackupWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "icBackupWebhook");
+    oocWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "oocWebhook");
 });
 
 Hooks.on("renderSidebar", async function (sidebar) {
@@ -145,12 +150,12 @@ Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
 
     const key = String(data.message.type) + (data.message.flags.core?.initiativeRoll ? "i" : "");
     const msgtype = `msgtype-${key}`;
-    html.addClass(msgtype);
+    html.toggleClass(msgtype, true);
 
     if (currentTab === tabTypeMap.get(key)) {
-        html.css("display", "list-item");
+        html.toggleClass("normalHide", false);
     } else {
-        html.css("display", "none");
+        html.toggleClass("normalHide", true);
     }
 });
 
@@ -211,12 +216,11 @@ Hooks.on("preCreateChatMessage", (chatMessage) => {
         }
     } else if ((chatMessage.type == 1 || chatMessage.type == 4) && !chatMessage.whisper?.length) {
         try {
-            const webhook = game.settings.get("tabbed-chatlog-fvtt-cn", "oocWebhook");
-            if (webhook) {
+            if (oocWebhook) {
                 const u = game.users.get(chatMessage.user);
                 const img = `${game.data.addresses.remote}/${u.avatar}`;
                 const name = u.name;
-                sendToDiscord(webhook, {
+                sendToDiscord(oocWebhook, {
                     content: turndown.turndown(chatMessage.content),
                     username: name,
                     avatar_url: img
@@ -269,50 +273,50 @@ function refreshLogs() {
             $("#chat-log .msgtype-3").toggleClass("forceHide", false);
             $("#icNotification").hide();
 
-            $("#chat-log .msgtype-0").hide();
-            $("#chat-log .msgtype-1").hide();
-            $("#chat-log .msgtype-2").show();
-            $("#chat-log .msgtype-3").show();
-            $("#chat-log .msgtype-4").hide();
-            $("#chat-log .msgtype-5").hide();
-            $("#chat-log .msgtype-5i").hide();
+            $("#chat-log .msgtype-0").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-1").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-2").toggleClass("normalHide", false);
+            $("#chat-log .msgtype-3").toggleClass("normalHide", false);
+            $("#chat-log .msgtype-4").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-5").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-5i").toggleClass("normalHide", true);
             break;
         case "rolls":
             $("#chat-log .msgtype-0").toggleClass("forceHide", false);
             $("#chat-log .msgtype-5").toggleClass("forceHide", false);
             $("#rollsNotification").hide();
 
-            $("#chat-log .msgtype-0").show();
-            $("#chat-log .msgtype-1").hide();
-            $("#chat-log .msgtype-2").hide();
-            $("#chat-log .msgtype-3").hide();
-            $("#chat-log .msgtype-4").hide();
-            $("#chat-log .msgtype-5").not(".gm-roll-hidden").show();
-            $("#chat-log .msgtype-5i").hide();
+            $("#chat-log .msgtype-0").toggleClass("normalHide", false);
+            $("#chat-log .msgtype-1").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-2").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-3").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-4").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-5").not(".gm-roll-hidden").toggleClass("normalHide", false);
+            $("#chat-log .msgtype-5i").toggleClass("normalHide", true);
             break;
         case "ooc":
             $("#chat-log .msgtype-1").toggleClass("forceHide", false);
             $("#chat-log .msgtype-4").toggleClass("forceHide", false);
             $("#oocNotification").hide();
 
-            $("#chat-log .msgtype-0").hide();
-            $("#chat-log .msgtype-1").show();
-            $("#chat-log .msgtype-2").hide();
-            $("#chat-log .msgtype-3").hide();
-            $("#chat-log .msgtype-4").show();
-            $("#chat-log .msgtype-5").hide();
-            $("#chat-log .msgtype-5i").hide();
+            $("#chat-log .msgtype-0").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-1").toggleClass("normalHide", false);
+            $("#chat-log .msgtype-2").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-3").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-4").toggleClass("normalHide", false);
+            $("#chat-log .msgtype-5").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-5i").toggleClass("normalHide", true);
             break;
         case "init":
             $("#chat-log .msgtype-5i").toggleClass("forceHide", false);
 
-            $("#chat-log .msgtype-0").hide();
-            $("#chat-log .msgtype-1").hide();
-            $("#chat-log .msgtype-2").hide();
-            $("#chat-log .msgtype-3").hide();
-            $("#chat-log .msgtype-4").hide();
-            $("#chat-log .msgtype-5").hide();
-            $("#chat-log .msgtype-5i").not(".gm-roll-hidden").show();
+            $("#chat-log .msgtype-0").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-1").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-2").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-3").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-4").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-5").toggleClass("normalHide", true);
+            $("#chat-log .msgtype-5i").not(".gm-roll-hidden").toggleClass("normalHide", false);
             break;
         default:
             console.log(`TabbedChatlog | Unknown tab ${currentTab}`);
