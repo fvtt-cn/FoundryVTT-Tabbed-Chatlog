@@ -10,7 +10,6 @@
 // };
 
 let currentTab = "ic";
-let salonEnabled = false;
 let turndown = undefined;
 let chatTabs = undefined;
 let sidebarCallback = undefined;
@@ -74,11 +73,9 @@ Hooks.on("renderChatLog", async function (_chatLog, html) {
                 $(".type3").not(".scenespecific").show();
                 $(".type4").hide();
 
-                if (!salonEnabled) {
-                    $(".type0").hide();
-                    $(".type5").hide();
-                    $(".type55").hide();
-                }
+                $(".type0").hide();
+                $(".type5").hide();
+                $(".type55").hide();
 
                 $("#icNotification").hide();
             } else if (tab == "ooc") {
@@ -87,13 +84,11 @@ Hooks.on("renderChatLog", async function (_chatLog, html) {
                 $(".type2").hide();
                 $(".type3").hide();
 
-                if (!salonEnabled) {
-                    $(".type0").hide();
-                    $(".type4").removeClass("hardHide");
-                    $(".type4").show();
-                    $(".type5").hide();
-                    $(".type55").hide();
-                }
+                $(".type0").hide();
+                $(".type4").removeClass("hardHide");
+                $(".type4").show();
+                $(".type5").hide();
+                $(".type55").hide();
 
                 $("#oocNotification").hide();
             } else if (tab == "init") {
@@ -133,17 +128,6 @@ Hooks.on("renderChatMessage", (chatMessage, html, data) => {
                 sceneMatches = false;
             }
         }
-    }
-
-    if (salonEnabled && chatMessage.data.type == 5) {
-        if (!html.hasClass("gm-roll-hidden")) {
-            html.css("display", "list-item");
-        }
-        return;
-    }
-
-    if (salonEnabled && chatMessage.data.type == 4) {
-        return;
     }
 
     if (currentTab == "rolls") {
@@ -210,14 +194,8 @@ Hooks.on("createChatMessage", (chatMessage) => {
         if (currentTab != "ic" && sceneMatches) {
             $("#icNotification").show();
         }
-    } else {
-        if (salonEnabled && chatMessage.data.type == 4) {
-            return;
-        }
-
-        if (currentTab != "ooc") {
-            $("#oocNotification").show();
-        }
+    } else if (currentTab != "ooc") {
+        $("#oocNotification").show();
     }
 });
 
@@ -403,8 +381,8 @@ Hooks.on("ready", () => {
     turndown = new TurndownService();
 });
 
-function shouldHide(parentHtml = null) {
-    return hideInStreamView || parentHtml && parentHtml.attr("id") !== "chat-log";
+function shouldHide() {
+    return hideInStreamView;
 }
 
 Hooks.on("init", () => {
@@ -444,7 +422,6 @@ Hooks.on("init", () => {
         type: Boolean,
     });
 
-    salonEnabled = game.data.modules.find(x => x.id == "salon")?.active;
     hideInStreamView = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
 });
 
