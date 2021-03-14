@@ -14,9 +14,10 @@ let salonEnabled = false;
 let turndown = undefined;
 let chatTabs = undefined;
 let sidebarCallback = undefined;
+let hideInStreamView = true;
 
 Hooks.on("renderSidebar", async function (sidebar) {
-    if (shouldHideDueToStreamView()) {
+    if (shouldHide()) {
         return;
     }
 
@@ -33,7 +34,7 @@ Hooks.on("renderSidebar", async function (sidebar) {
 });
 
 Hooks.on("renderChatLog", async function (_chatLog, html) {
-    if (shouldHideDueToStreamView()) {
+    if (shouldHide()) {
         return;
     }
 
@@ -116,7 +117,7 @@ Hooks.on("renderChatLog", async function (_chatLog, html) {
 });
 
 Hooks.on("renderChatMessage", (chatMessage, html, data) => {
-    if (shouldHideDueToStreamView()) {
+    if (shouldHide(html.parent())) {
         return;
     }
 
@@ -330,7 +331,7 @@ function generatePortraitImageElement(actor) {
 }
 
 Hooks.on("renderSceneNavigation", (sceneNav) => {
-    if (shouldHideDueToStreamView()) {
+    if (shouldHide()) {
         return;
     }
 
@@ -402,13 +403,8 @@ Hooks.on("ready", () => {
     turndown = new TurndownService();
 });
 
-function shouldHideDueToStreamView() {
-    if (game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView")) {
-        if (window.location.href.endsWith("/stream")) {
-            return true;
-        }
-    }
-    return false;
+function shouldHide(parentHtml = null) {
+    return hideInStreamView || parentHtml && parentHtml.attr("id") !== "chat-log";
 }
 
 Hooks.on("init", () => {
@@ -449,6 +445,7 @@ Hooks.on("init", () => {
     });
 
     salonEnabled = game.data.modules.find(x => x.id == "salon")?.active;
+    hideInStreamView = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
 });
 
 
