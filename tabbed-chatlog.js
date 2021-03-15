@@ -292,7 +292,7 @@ function refreshLogs() {
             $("#icNotification").hide();
             break;
         case "rolls":
-            hideMessages(2, 3, 4, 5, "5i");
+            hideMessages(1, 2, 3, 4, "5i");
             showMessages(0, 5);
             $("#rollsNotification").hide();
             break;
