@@ -1,20 +1,23 @@
 {
-    "TC.SETTINGS.OocWebhookName": "用于超游聊天的Discord Webhook",
-    "TC.SETTINGS.OocWebhookHint": "超游聊天始终发送到全局并且和场景无关",
-    "TC.SETTINGS.IcFallbackWebhookName": "未注册Webhook的用于场景内角色聊天的Discord Webhook",
-    "TC.SETTINGS.IcFallbackWebhookHint": "如果你不想对每个场景设置Webhook，设定该选项继续即可",
+    "TC_CN.SETTINGS.OocWebhookName": "用于超游聊天的 Discord Webhook",
+    "TC_CN.SETTINGS.OocWebhookHint": "超游聊天始终发送到全局并且和场景无关",
+    "TC_CN.SETTINGS.IcFallbackWebhookName": "未注册 Webhook 的用于场景内角色聊天的 Discord Webhook",
+    "TC_CN.SETTINGS.IcFallbackWebhookHint": "如果你不想对每个场景设置 Webhook，设定该选项继续即可",
 
-    "TC.SETTINGS.IcSceneWebhookName": "用于该场景内角色聊天的Discord Webhook",
-    "TC.SETTINGS.IcSceneWebhookHint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
+    "TC_CN.SETTINGS.IcSceneWebhookName": "用于该场景内角色聊天的 Discord Webhook",
+    "TC_CN.SETTINGS.IcSceneWebhookHint": "https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
 
-    "TC.SETTINGS.IcChatInOocName": "切在超游面板时，角色聊天自动转换成超游聊天吗？",
-    "TC.SETTINGS.IcChatInOocHint": "帮一哈忘记使用/ooc的玩家",
+    "TC_CN.SETTINGS.IcChatInOocName": "切在超游面板时，角色聊天自动转换成超游聊天吗？",
+    "TC_CN.SETTINGS.IcChatInOocHint": "帮一哈忘记使用 /ooc 的玩家",
 
-    "TC.SETTINGS.HideInStreamViewName": "在FoundryVTT的/stream浏览模式下禁用Tabbed Chatlog？",
-    "TC.SETTINGS.HideInStreamViewHint": "默认禁用",
+    "TC_CN.SETTINGS.HideInStreamViewName": "在 FoundryVTT 的 /stream 浏览模式下禁用 Tabbed Chatlog？",
+    "TC_CN.SETTINGS.HideInStreamViewHint": "默认禁用",
 
-    "TC.TABS.IC": "角色",
-    "TC.TABS.OOC": "超游",
-    "TC.TABS.Rolls": "掷骰",
-    "TC.TABS.Initiative": "先攻"
+    "TC_CN.SETTINGS.InitiativeTabName": "先攻掷骰单独出现？",
+    "TC_CN.SETTINGS.InitiativeTabHint": "（需要重载）默认启用",
+
+    "TC_CN.TABS.IC": "角色",
+    "TC_CN.TABS.OOC": "超游",
+    "TC_CN.TABS.Rolls": "掷骰",
+    "TC_CN.TABS.Initiative": "先攻"
 }

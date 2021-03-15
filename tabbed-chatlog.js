@@ -17,6 +17,7 @@ var shouldHide = true;
 var icChatInOoc = false;
 var icBackupWebhook = undefined;
 var oocWebhook = undefined;
+var initiativeTab = true;
 
 const tabTypeMap = new Map([
     [ "0", "rolls" ],
@@ -39,8 +40,8 @@ Hooks.on("ready", () => {
 
 Hooks.on("init", () => {
     game.settings.register("tabbed-chatlog-fvtt-cn", "oocWebhook", {
-        name: game.i18n.localize("TC.SETTINGS.OocWebhookName"),
-        hint: game.i18n.localize("TC.SETTINGS.OocWebhookHint"),
+        name: game.i18n.localize("TC_CN.SETTINGS.OocWebhookName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.OocWebhookHint"),
         scope: "world",
         config: true,
         default: "",
@@ -49,8 +50,8 @@ Hooks.on("init", () => {
     });
 
     game.settings.register("tabbed-chatlog-fvtt-cn", "icBackupWebhook", {
-        name: game.i18n.localize("TC.SETTINGS.IcFallbackWebhookName"),
-        hint: game.i18n.localize("TC.SETTINGS.IcFallbackWebhookHint"),
+        name: game.i18n.localize("TC_CN.SETTINGS.IcFallbackWebhookName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.IcFallbackWebhookHint"),
         scope: "world",
         config: true,
         default: "",
@@ -59,8 +60,8 @@ Hooks.on("init", () => {
     });
 
     game.settings.register("tabbed-chatlog-fvtt-cn", "icChatInOoc", {
-        name: game.i18n.localize("TC.SETTINGS.IcChatInOocName"),
-        hint: game.i18n.localize("TC.SETTINGS.IcChatInOocHint"),
+        name: game.i18n.localize("TC_CN.SETTINGS.IcChatInOocName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.IcChatInOocHint"),
         scope: "world",
         config: true,
         default: true,
@@ -69,18 +70,29 @@ Hooks.on("init", () => {
     });
 
     game.settings.register("tabbed-chatlog-fvtt-cn", "hideInStreamView", {
-        name: game.i18n.localize("TC.SETTINGS.HideInStreamViewName"),
-        hint: game.i18n.localize("TC.SETTINGS.HideInStreamViewHint"),
+        name: game.i18n.localize("TC_CN.SETTINGS.HideInStreamViewName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.HideInStreamViewHint"),
         scope: "world",
         config: true,
         default: true,
         type: Boolean,
     });
 
+    game.settings.register("tabbed-chatlog-fvtt-cn", "initiativeTab", {
+        name: game.i18n.localize("TC_CN.SETTINGS.InitiativeTabName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.InitiativeTabHint"),
+        scope: "world",
+        config: true,
+        default: true,
+        type: Boolean,
+        onChange: () => location.reload(),
+    });
+
     shouldHide = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
     icChatInOoc = game.settings.get("tabbed-chatlog-fvtt-cn", "icChatInOoc");
     icBackupWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "icBackupWebhook");
     oocWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "oocWebhook");
+    initiativeTab = game.settings.get("tabbed-chatlog-fvtt-cn", "initiativeTab");
 });
 
 Hooks.on("renderSidebar", async function (sidebar) {
@@ -105,26 +117,32 @@ Hooks.on("renderChatLog", async function (_chatLog, html) {
         return;
     }
 
+    const initTabHtml = initiativeTab
+        ? `
+        <a class="item init" data-tab="init">
+            ${game.i18n.localize("TC_CN.TABS.Initiative")}
+        </a>
+        `
+        : "";
+    const notifyClass = `tc-notification-${initiativeTab ? 4 : 3}`;
     const tabHeader = `
     <nav class="tabbedchatlog tabs">
         <a class="item ic" data-tab="ic">
-            ${game.i18n.localize("TC.TABS.IC")}
+            ${game.i18n.localize("TC_CN.TABS.IC")}
         </a>
-        <i id="icNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
+        <i id="icNotification" class="${notifyClass} notification-pip fas fa-exclamation-circle" style="display: none;"></i>
 
         <a class="item rolls" data-tab="rolls">
-            ${game.i18n.localize("TC.TABS.Rolls")}
+            ${game.i18n.localize("TC_CN.TABS.Rolls")}
         </a>
-        <i id="rollsNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
+        <i id="rollsNotification" class="${notifyClass} notification-pip fas fa-exclamation-circle" style="display: none;"></i>
 
         <a class="item ooc" data-tab="ooc">
-            ${game.i18n.localize("TC.TABS.OOC")}
+            ${game.i18n.localize("TC_CN.TABS.OOC")}
         </a>
-        <i id="oocNotification" class="notification-pip fas fa-exclamation-circle" style="display: none;"></i>
+        <i id="oocNotification" class="${notifyClass} notification-pip fas fa-exclamation-circle" style="display: none;"></i>
 
-        <a class="item init" data-tab="init">
-            ${game.i18n.localize("TC.TABS.Initiative")}
-        </a>
+        ${initTabHtml}
     </nav>
     `;
     html.prepend(tabHeader);
@@ -148,7 +166,7 @@ Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
         return;
     }
 
-    const key = String(data.message.type) + (data.message.flags.core?.initiativeRoll ? "i" : "");
+    const key = String(data.message.type) + (initiativeTab && data.message.flags.core?.initiativeRoll ? "i" : "");
     const msgtype = `msgtype-${key}`;
     html.toggleClass(msgtype, true);
 
@@ -167,7 +185,7 @@ Hooks.on("createChatMessage", (chatMessage) => {
             }
             break;
         case 5:
-            if (currentTab != "rolls" && chatMessage.data.whisper.length == 0 && !chatMessage.data.flags.core?.initiativeRoll) {
+            if (currentTab != "rolls" && chatMessage.data.whisper.length == 0 && !(initiativeTab && chatMessage.data.flags.core?.initiativeRoll)) {
                 $("#rollsNotification").show();
             }
             break;
@@ -247,9 +265,9 @@ Hooks.on("renderSceneConfig", (app, html) => {
 
     const fxHtml = `
     <div class="form-group">
-        <label>${game.i18n.localize("TC.SETTINGS.IcSceneWebhookName")}</label>
+        <label>${game.i18n.localize("TC_CN.SETTINGS.IcSceneWebhookName")}</label>
         <input id="scenewebhook" type="text" name="scenewebhook" value="${loadedWebhookData}" placeholder="Webhook"}>
-        <p class="notes">${game.i18n.localize("TC.SETTINGS.IcSceneWebhookHint")}</p>
+        <p class="notes">${game.i18n.localize("TC_CN.SETTINGS.IcSceneWebhookHint")}</p>
     </div>
     `;
     const fxFind = html.find("select[name ='journal']");
@@ -269,58 +287,40 @@ Hooks.on("closeSceneConfig", (app, html) => {
 function refreshLogs() {
     switch (currentTab) {
         case "ic":
-            $("#chat-log .msgtype-2").toggleClass("forceHide", false);
-            $("#chat-log .msgtype-3").toggleClass("forceHide", false);
+            hideMessages(0, 1, 4, 5, "5i");
+            showMessages(2, 3);
             $("#icNotification").hide();
-
-            $("#chat-log .msgtype-0").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-1").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-2").toggleClass("normalHide", false);
-            $("#chat-log .msgtype-3").toggleClass("normalHide", false);
-            $("#chat-log .msgtype-4").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-5").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-5i").toggleClass("normalHide", true);
             break;
         case "rolls":
-            $("#chat-log .msgtype-0").toggleClass("forceHide", false);
-            $("#chat-log .msgtype-5").toggleClass("forceHide", false);
+            hideMessages(2, 3, 4, 5, "5i");
+            showMessages(0, 5);
             $("#rollsNotification").hide();
-
-            $("#chat-log .msgtype-0").toggleClass("normalHide", false);
-            $("#chat-log .msgtype-1").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-2").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-3").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-4").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-5").not(".gm-roll-hidden").toggleClass("normalHide", false);
-            $("#chat-log .msgtype-5i").toggleClass("normalHide", true);
             break;
         case "ooc":
-            $("#chat-log .msgtype-1").toggleClass("forceHide", false);
-            $("#chat-log .msgtype-4").toggleClass("forceHide", false);
+            hideMessages(0, 2, 3, 5, "5i");
+            showMessages(1, 4);
             $("#oocNotification").hide();
-
-            $("#chat-log .msgtype-0").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-1").toggleClass("normalHide", false);
-            $("#chat-log .msgtype-2").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-3").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-4").toggleClass("normalHide", false);
-            $("#chat-log .msgtype-5").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-5i").toggleClass("normalHide", true);
             break;
         case "init":
-            $("#chat-log .msgtype-5i").toggleClass("forceHide", false);
-
-            $("#chat-log .msgtype-0").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-1").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-2").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-3").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-4").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-5").toggleClass("normalHide", true);
-            $("#chat-log .msgtype-5i").not(".gm-roll-hidden").toggleClass("normalHide", false);
+            hideMessages(0, 1, 2, 3, 4, 5);
+            showMessages("5i");
             break;
         default:
             console.log(`TabbedChatlog | Unknown tab ${currentTab}`);
             break;
+    }
+}
+
+function hideMessages(...hides) {
+    for (let hide of hides) {
+        $(`#chat-log .msgtype-${hide}`).toggleClass("normalHide", true);
+    }
+}
+
+function showMessages(...shows) {
+    for (let show of shows) {
+        $(`#chat-log .msgtype-${show}`).toggleClass("forceHide", false);
+        $(`#chat-log .msgtype-${show}`).toggleClass("normalHide", false);
     }
 }
 
@@ -329,7 +329,7 @@ function sendToDiscord(webhook, body) {
         type: "POST",
         url: webhook,
         data: JSON.stringify(body),
-        success: function () { },
+        success: () => {},
         contentType: "application/json",
         dataType: "json"
     });

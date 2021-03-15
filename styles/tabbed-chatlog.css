@@ -25,17 +25,32 @@
     display: none !important;
 }
 
-#icNotification {
+#icNotification.tc-notification-4 {
     top: 35px;
     right: 228px;
 }
 
-#oocNotification {
+#oocNotification.tc-notification-4 {
     top: 35px;
     right: 80px;
 }
 
-#rollsNotification {
+#rollsNotification.tc-notification-4 {
     top: 35px;
     right: 154px;
+}
+
+#icNotification.tc-notification-3 {
+    top: 35px;
+    right: 196px;
+}
+
+#oocNotification.tc-notification-3 {
+    top: 35px;
+    right: 20px;
+}
+
+#rollsNotification.tc-notification-3 {
+    top: 35px;
+    right: 118px;
 }
