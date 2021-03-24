@@ -16,6 +16,12 @@
     "TC_CN.SETTINGS.InitiativeTabName": "先攻掷骰单独出现？",
     "TC_CN.SETTINGS.InitiativeTabHint": "（需要重载）默认启用",
 
+    "TC_CN.SETTINGS.PerSceneInCharacterName": "将角色消息按场景分拆？",
+    "TC_CN.SETTINGS.PerSceneInCharacterHint": "（需要重载）默认禁用",
+
+    "TC_CN.SETTINGS.PerSceneRollsName": "将掷骰和先攻消息按场景分拆？",
+    "TC_CN.SETTINGS.PerSceneRollsHint": "（需要重载）默认禁用",
+
     "TC_CN.TABS.IC": "角色",
     "TC_CN.TABS.OOC": "超游",
     "TC_CN.TABS.Rolls": "掷骰",

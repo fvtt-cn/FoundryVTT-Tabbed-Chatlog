@@ -18,7 +18,10 @@ var icChatInOoc = false;
 var icBackupWebhook = undefined;
 var oocWebhook = undefined;
 var initiativeTab = true;
+var perSceneIc = false;
+var perSceneRolls = false;
 
+const MODULE_NAME = "tabbed-chatlog-fvtt-cn";
 const tabTypeMap = new Map([
     [ "0", "rolls" ],
     [ "1", "ooc" ],
@@ -39,7 +42,7 @@ Hooks.on("ready", () => {
 });
 
 Hooks.on("init", () => {
-    game.settings.register("tabbed-chatlog-fvtt-cn", "oocWebhook", {
+    game.settings.register(MODULE_NAME, "oocWebhook", {
         name: game.i18n.localize("TC_CN.SETTINGS.OocWebhookName"),
         hint: game.i18n.localize("TC_CN.SETTINGS.OocWebhookHint"),
         scope: "world",
@@ -49,7 +52,7 @@ Hooks.on("init", () => {
         onChange: value => oocWebhook = value,
     });
 
-    game.settings.register("tabbed-chatlog-fvtt-cn", "icBackupWebhook", {
+    game.settings.register(MODULE_NAME, "icBackupWebhook", {
         name: game.i18n.localize("TC_CN.SETTINGS.IcFallbackWebhookName"),
         hint: game.i18n.localize("TC_CN.SETTINGS.IcFallbackWebhookHint"),
         scope: "world",
@@ -59,7 +62,7 @@ Hooks.on("init", () => {
         onChange: value => icBackupWebhook = value,
     });
 
-    game.settings.register("tabbed-chatlog-fvtt-cn", "icChatInOoc", {
+    game.settings.register(MODULE_NAME, "icChatInOoc", {
         name: game.i18n.localize("TC_CN.SETTINGS.IcChatInOocName"),
         hint: game.i18n.localize("TC_CN.SETTINGS.IcChatInOocHint"),
         scope: "world",
@@ -69,7 +72,7 @@ Hooks.on("init", () => {
         onChange: value => icChatInOoc = value,
     });
 
-    game.settings.register("tabbed-chatlog-fvtt-cn", "hideInStreamView", {
+    game.settings.register(MODULE_NAME, "hideInStreamView", {
         name: game.i18n.localize("TC_CN.SETTINGS.HideInStreamViewName"),
         hint: game.i18n.localize("TC_CN.SETTINGS.HideInStreamViewHint"),
         scope: "world",
@@ -78,7 +81,7 @@ Hooks.on("init", () => {
         type: Boolean,
     });
 
-    game.settings.register("tabbed-chatlog-fvtt-cn", "initiativeTab", {
+    game.settings.register(MODULE_NAME, "initiativeTab", {
         name: game.i18n.localize("TC_CN.SETTINGS.InitiativeTabName"),
         hint: game.i18n.localize("TC_CN.SETTINGS.InitiativeTabHint"),
         scope: "world",
@@ -88,14 +91,36 @@ Hooks.on("init", () => {
         onChange: () => location.reload(),
     });
 
-    shouldHide = game.settings.get("tabbed-chatlog-fvtt-cn", "hideInStreamView") && window.location.href.endsWith("/stream");
-    icChatInOoc = game.settings.get("tabbed-chatlog-fvtt-cn", "icChatInOoc");
-    icBackupWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "icBackupWebhook");
-    oocWebhook = game.settings.get("tabbed-chatlog-fvtt-cn", "oocWebhook");
-    initiativeTab = game.settings.get("tabbed-chatlog-fvtt-cn", "initiativeTab");
+    game.settings.register(MODULE_NAME, "perSceneIc", {
+        name: game.i18n.localize("TC_CN.SETTINGS.PerSceneInCharacterName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.PerSceneInCharacterHint"),
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean,
+        onChange: () => location.reload(),
+    });
+
+    game.settings.register(MODULE_NAME, "perSceneRolls", {
+        name: game.i18n.localize("TC_CN.SETTINGS.PerSceneRollsName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.PerSceneRollsHint"),
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean,
+        onChange: () => location.reload(),
+    });
+
+    shouldHide = game.settings.get(MODULE_NAME, "hideInStreamView") && window.location.href.endsWith("/stream");
+    icChatInOoc = game.settings.get(MODULE_NAME, "icChatInOoc");
+    icBackupWebhook = game.settings.get(MODULE_NAME, "icBackupWebhook");
+    oocWebhook = game.settings.get(MODULE_NAME, "oocWebhook");
+    initiativeTab = game.settings.get(MODULE_NAME, "initiativeTab");
+    perSceneIc = game.settings.get(MODULE_NAME, "perSceneIc");
+    perSceneRolls = game.settings.get(MODULE_NAME, "perSceneRolls");
 });
 
-Hooks.on("renderSidebar", async function (sidebar) {
+Hooks.on("renderSidebar", async (sidebar) => {
     if (shouldHide) {
         return;
     }
@@ -112,7 +137,7 @@ Hooks.on("renderSidebar", async function (sidebar) {
     };
 });
 
-Hooks.on("renderChatLog", async function (_chatLog, html) {
+Hooks.on("renderChatLog", async (_chatLog, html) => {
     if (shouldHide) {
         return;
     }
@@ -170,34 +195,61 @@ Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
     const msgtype = `msgtype-${key}`;
     html.toggleClass(msgtype, true);
 
-    if (currentTab === tabTypeMap.get(key)) {
+    const msgTabType = tabTypeMap.get(key);
+
+    if (perSceneIc && msgTabType === "ic" || perSceneRolls && (msgTabType === "rolls" || msgTabType === "init")) {
+        if (data.message?.speaker?.scene) {
+            html.toggleClass("perscene", true);
+            const msgscene = `msgscene-${data.message.speaker.scene}`;
+            html.toggleClass(msgscene, true);
+
+            if (game.scenes.viewed.id === data.message.speaker.scene) {
+                html.toggleClass("forceHide", false);
+            } else {
+                html.toggleClass("forceHide", true);
+            }
+        }
+    }
+
+    if (currentTab === msgTabType) {
         html.toggleClass("normalHide", false);
     } else {
         html.toggleClass("normalHide", true);
     }
 });
 
+Hooks.on("renderSceneNavigation", () => {
+    if (shouldHide) {
+        return;
+    }
+
+    if (perSceneIc && currentTab === "ic" || perSceneRolls && (currentTab === "rolls" || currentTab === "init")) {
+        $(`#chat-log .perscene:not(.msgscene-${game.scenes.viewed.id})`).toggleClass("forceHide", true);
+        $(`#chat-log .perscene.msgscene-${game.scenes.viewed.id}`).toggleClass("forceHide", false);
+    }
+});
+
 Hooks.on("createChatMessage", (chatMessage) => {
     switch (chatMessage.data.type) {
         case 0:
-            if (currentTab != "rolls") {
+            if (currentTab !== "rolls") {
                 $("#rollsNotification").show();
             }
             break;
         case 5:
-            if (currentTab != "rolls" && chatMessage.data.whisper.length == 0 && !(initiativeTab && chatMessage.data.flags.core?.initiativeRoll)) {
+            if (currentTab !== "rolls" && chatMessage.data.whisper.length === 0 && !(initiativeTab && chatMessage.data.flags.core?.initiativeRoll)) {
                 $("#rollsNotification").show();
             }
             break;
         case 1:
         case 4:
-            if (currentTab != "ooc") {
+            if (currentTab !== "ooc" && (chatMessage.data.whisper.length === 0 || chatMessage.data.whisper.includes(game.user.id))) {
                 $("#oocNotification").show();
             }
             break;
         case 2:
         case 3:
-            if (currentTab != "ic") {
+            if (currentTab !== "ic") {
                 $("#icNotification").show();
             }
             break;
@@ -206,7 +258,7 @@ Hooks.on("createChatMessage", (chatMessage) => {
 
 Hooks.on("preCreateChatMessage", (chatMessage) => {
     // IC in OOC.
-    if (icChatInOoc && currentTab == "ooc" && chatMessage.type == 2) {
+    if (icChatInOoc && currentTab === "ooc" && chatMessage.type === 2) {
         chatMessage.type = 1;
         delete chatMessage.speaker;
     }
@@ -232,7 +284,7 @@ Hooks.on("preCreateChatMessage", (chatMessage) => {
         } catch (err) {
             console.log("TabbedChatlog | Failed to send Discord IC webhook message", err);
         }
-    } else if ((chatMessage.type == 1 || chatMessage.type == 4) && !chatMessage.whisper?.length) {
+    } else if ((chatMessage.type === 1 || chatMessage.type === 4) && !chatMessage.whisper?.length) {
         try {
             if (oocWebhook) {
                 const u = game.users.get(chatMessage.user);
@@ -275,7 +327,6 @@ Hooks.on("renderSceneConfig", (app, html) => {
     formGroup.after(fxHtml);
 });
 
-
 Hooks.on("closeSceneConfig", (app, html) => {
     if (app.object.compendium) {
         return;
@@ -290,11 +341,19 @@ function refreshLogs() {
             hideMessages(0, 1, 4, 5, "5i");
             showMessages(2, 3);
             $("#icNotification").hide();
+            if (perSceneIc) {
+                $(`#chat-log .perscene:not(.msgscene-${game.scenes.viewed.id})`).toggleClass("forceHide", true);
+                $(`#chat-log .perscene.msgscene-${game.scenes.viewed.id}`).toggleClass("forceHide", false);
+            }
             break;
         case "rolls":
             hideMessages(1, 2, 3, 4, "5i");
             showMessages(0, 5);
             $("#rollsNotification").hide();
+            if (perSceneRolls) {
+                $(`#chat-log .perscene:not(.msgscene-${game.scenes.viewed.id})`).toggleClass("forceHide", true);
+                $(`#chat-log .perscene.msgscene-${game.scenes.viewed.id}`).toggleClass("forceHide", false);
+            }
             break;
         case "ooc":
             hideMessages(0, 2, 3, 5, "5i");
@@ -304,6 +363,10 @@ function refreshLogs() {
         case "init":
             hideMessages(0, 1, 2, 3, 4, 5);
             showMessages("5i");
+            if (perSceneRolls) {
+                $(`#chat-log .perscene:not(.msgscene-${game.scenes.viewed.id})`).toggleClass("forceHide", true);
+                $(`#chat-log .perscene.msgscene-${game.scenes.viewed.id}`).toggleClass("forceHide", false);
+            }
             break;
         default:
             console.log(`TabbedChatlog | Unknown tab ${currentTab}`);
