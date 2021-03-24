@@ -8,7 +8,7 @@ Splits the Chatlog into In Character, Rolls, Out of Character, and Initiative.
 
 分割聊天面板为四块：角色、掷骰、超游、先攻，避免刷屏影响聊天信息阅读。支持在不同情况下自动切换到对应的面板，使用后令 FVTT 聊天面板简洁很多。
 
-当前该 MOD 相较于原版，移除了对 `Salon`, `Dice So Nice` 的兼容性支持，移除了消息按场景显示的功能。如需要以上兼容性支持或功能，请使用原版 Tabbed-Chatlog!
+当前该 MOD 相较于原版，移除了对 `Salon`, `Dice So Nice` 的兼容性支持。如需要以上兼容性支持，请使用原版 Tabbed-Chatlog!
 
 Thanks to the original author cswendrowski.
 
