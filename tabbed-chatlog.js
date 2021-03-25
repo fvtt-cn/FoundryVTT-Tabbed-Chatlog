@@ -157,6 +157,7 @@ Hooks.on("ready", () => {
 
     if (game.modules.get("lib-wrapper")?.active && flushVisibleOnly) {
         libWrapper.register(MODULE_NAME, "Messages.prototype.flush", async () => {
+            // It's questionable to use game.messages instead of this.entities here.
             return Dialog.confirm({
                 title: game.i18n.localize("CHAT.FlushTitle"),
                 content: game.i18n.localize("CHAT.FlushWarning"),
@@ -171,6 +172,7 @@ Hooks.on("ready", () => {
         }, "OVERRIDE");
 
         libWrapper.register(MODULE_NAME, "Messages.prototype.export", () => {
+            // It's questionable to use game.messages instead of this.entities here.
             const log = game.messages
                 .filter(m => isVisible(m))
                 .map(m => m.export())
@@ -187,10 +189,10 @@ Hooks.on("renderSidebar", async (sidebar) => {
         return;
     }
 
-    //TODO: Use lib-wrapper to wrap sidebar tabs' callback
     const sidebarTabs = sidebar._tabs[0];
     sidebarCallback = sidebarTabs.callback;
     sidebarTabs.callback = (event, tabs, active) => {
+        // Manually wrap instead.
         if (sidebarCallback) {
             sidebarCallback(event, tabs, active);
         }

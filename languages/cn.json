@@ -1,6 +1,7 @@
 {
     "TC_CN.SETTINGS.OocWebhookName": "用于超游聊天的 Discord Webhook",
     "TC_CN.SETTINGS.OocWebhookHint": "超游聊天始终发送到全局并且和场景无关",
+
     "TC_CN.SETTINGS.IcFallbackWebhookName": "未注册 Webhook 的用于场景内角色聊天的 Discord Webhook",
     "TC_CN.SETTINGS.IcFallbackWebhookHint": "如果你不想对每个场景设置 Webhook，设定该选项继续即可",
 
