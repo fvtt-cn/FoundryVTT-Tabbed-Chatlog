@@ -9,18 +9,26 @@
 //     ROLL: 5
 // };
 
-var currentTab = "ic";
-var turndown = undefined;
-var chatTabs = undefined;
-var sidebarCallback = undefined;
-var shouldHide = true;
+// Global Settings.
 var icChatInOoc = false;
 var icBackupWebhook = undefined;
 var oocWebhook = undefined;
 var initiativeTab = true;
 var perSceneIc = false;
 var perSceneRolls = false;
+var flushVisibleOnly = false;
 
+// Client Settings.
+var autoNavigate = false;
+
+// Static Variables.
+var currentTab = "ic";
+var turndown = undefined;
+var chatTabs = undefined;
+var sidebarCallback = undefined;
+var shouldHide = true;
+
+// CONST Variables.
 const MODULE_NAME = "tabbed-chatlog-fvtt-cn";
 const tabTypeMap = new Map([
     [ "0", "rolls" ],
@@ -31,15 +39,6 @@ const tabTypeMap = new Map([
     [ "5", "rolls" ],
     [ "5i", "init" ]
 ]);
-
-Hooks.on("ready", () => {
-    // NarratorTools messages show in IC chat if not modified before.
-    if (NarratorTools?._msgtype === 0) {
-        NarratorTools._msgtype = 2;
-    }
-
-    turndown = new TurndownService();
-});
 
 Hooks.on("init", () => {
     game.settings.register(MODULE_NAME, "oocWebhook", {
@@ -111,6 +110,32 @@ Hooks.on("init", () => {
         onChange: () => location.reload(),
     });
 
+    if (game.modules.get("lib-wrapper")?.active) {
+        game.settings.register(MODULE_NAME, "flushVisibleOnly", {
+            name: game.i18n.localize("TC_CN.SETTINGS.FlushVisibleOnlyName"),
+            hint: game.i18n.localize("TC_CN.SETTINGS.FlushVisibleOnlyHint"),
+            scope: "world",
+            config: true,
+            default: false,
+            type: Boolean,
+            onChange: () => {
+                libWrapper.unregister(MODULE_NAME, "Messages.prototype.flush");
+                libWrapper.unregister(MODULE_NAME, "Messages.prototype.export");
+                location.reload();
+            },
+        });
+    }
+
+    game.settings.register(MODULE_NAME, "autoNavigate", {
+        name: game.i18n.localize("TC_CN.SETTINGS.AutoNavigateName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.AutoNavigateHint"),
+        scope: "client",
+        config: true,
+        default: false,
+        type: Boolean,
+        onChange: value => autoNavigate = value,
+    });
+
     shouldHide = game.settings.get(MODULE_NAME, "hideInStreamView") && window.location.href.endsWith("/stream");
     icChatInOoc = game.settings.get(MODULE_NAME, "icChatInOoc");
     icBackupWebhook = game.settings.get(MODULE_NAME, "icBackupWebhook");
@@ -118,6 +143,43 @@ Hooks.on("init", () => {
     initiativeTab = game.settings.get(MODULE_NAME, "initiativeTab");
     perSceneIc = game.settings.get(MODULE_NAME, "perSceneIc");
     perSceneRolls = game.settings.get(MODULE_NAME, "perSceneRolls");
+    flushVisibleOnly = game.settings.get(MODULE_NAME, "flushVisibleOnly");
+    autoNavigate = game.settings.get(MODULE_NAME, "autoNavigate");
+});
+
+Hooks.on("ready", () => {
+    // NarratorTools messages show in IC chat if not modified before.
+    if (NarratorTools?._msgtype === 0) {
+        NarratorTools._msgtype = 2;
+    }
+
+    turndown = new TurndownService();
+
+    if (game.modules.get("lib-wrapper")?.active && flushVisibleOnly) {
+        libWrapper.register(MODULE_NAME, "Messages.prototype.flush", async () => {
+            return Dialog.confirm({
+                title: game.i18n.localize("CHAT.FlushTitle"),
+                content: game.i18n.localize("CHAT.FlushWarning"),
+                yes: () => ChatMessage.delete(game.messages
+                    .filter(m => isVisible(m))
+                    .map(m => m.id)),
+                options: {
+                    top: window.innerHeight - 150,
+                    left: window.innerWidth - 720
+                }
+            });
+        }, "OVERRIDE");
+
+        libWrapper.register(MODULE_NAME, "Messages.prototype.export", () => {
+            const log = game.messages
+                .filter(m => isVisible(m))
+                .map(m => m.export())
+                .join("\n---------------------------\n");
+            const date = new Date().toDateString().replace(/\s/g, "-");
+            const filename = `fvtt-log-${date}.txt`;
+            saveDataToFile(log, "text/plain", filename);
+        }, "OVERRIDE");
+    }
 });
 
 Hooks.on("renderSidebar", async (sidebar) => {
@@ -125,6 +187,7 @@ Hooks.on("renderSidebar", async (sidebar) => {
         return;
     }
 
+    //TODO: Use lib-wrapper to wrap sidebar tabs' callback
     const sidebarTabs = sidebar._tabs[0];
     sidebarCallback = sidebarTabs.callback;
     sidebarTabs.callback = (event, tabs, active) => {
@@ -233,26 +296,44 @@ Hooks.on("createChatMessage", (chatMessage) => {
     switch (chatMessage.data.type) {
         case 0:
             if (currentTab !== "rolls") {
-                $("#rollsNotification").show();
+                if (autoNavigate) {
+                    chatTabs?.activate("rolls", { triggerCallback: true });
+                } else {
+                    $("#rollsNotification").show();
+                }
             }
             break;
         case 5:
             if (currentTab !== "rolls" && chatMessage.data.whisper.length === 0 && !(initiativeTab && chatMessage.data.flags.core?.initiativeRoll)) {
-                $("#rollsNotification").show();
+                if (autoNavigate) {
+                    chatTabs?.activate("rolls", { triggerCallback: true });
+                } else {
+                    $("#rollsNotification").show();
+                }
             }
             break;
         case 1:
         case 4:
             if (currentTab !== "ooc" && (chatMessage.data.whisper.length === 0 || chatMessage.data.whisper.includes(game.user.id))) {
-                $("#oocNotification").show();
+                if (autoNavigate) {
+                    chatTabs?.activate("ooc", { triggerCallback: true });
+                } else {
+                    $("#oocNotification").show();
+                }
             }
             break;
         case 2:
         case 3:
             if (currentTab !== "ic") {
-                $("#icNotification").show();
+                if (autoNavigate) {
+                    chatTabs?.activate("ic", { triggerCallback: true });
+                } else {
+                    $("#icNotification").show();
+                }
             }
             break;
+
+        // Do not activate or notify for initiative rolls.
     }
 });
 
@@ -334,6 +415,19 @@ Hooks.on("closeSceneConfig", (app, html) => {
 
     app.object.setFlag("tabbed-chatlog", "webhook", html.find("input[name ='scenewebhook']")[0].value);
 });
+
+function isVisible(message) {
+    const key = String(message.data.type) + (initiativeTab && message.data.flags.core?.initiativeRoll ? "i" : "");
+    const msgTabType = tabTypeMap.get(key);
+
+    if (message.data.speaker?.scene && (perSceneIc && msgTabType === "ic" || perSceneRolls && (msgTabType === "rolls" || msgTabType === "init"))) {
+        if (game.scenes.viewed.id !== message.data.speaker.scene) {
+            return false;
+        }
+    }
+
+    return currentTab === msgTabType;
+}
 
 function refreshLogs() {
     switch (currentTab) {
