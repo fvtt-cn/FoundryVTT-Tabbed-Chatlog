@@ -24,7 +24,7 @@
     "TC_CN.SETTINGS.PerSceneRollsHint": "（需要重载）默认禁用",
 
     "TC_CN.SETTINGS.FlushVisibleOnlyName": "仅导出/清空可见的消息？",
-    "TC_CN.SETTINGS.FlushVisibleOnlyHint": "（需要重载）默认禁用，仅当启用 libWrapper 时可用",
+    "TC_CN.SETTINGS.FlushVisibleOnlyHint": "（需要重载）默认禁用",
 
     "TC_CN.SETTINGS.AutoNavigateName": "自动切换到新消息所在栏？",
     "TC_CN.SETTINGS.AutoNavigateHint": "客户端设置，默认禁用，不会自动切换到先攻栏",

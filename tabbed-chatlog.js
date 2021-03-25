@@ -110,21 +110,15 @@ Hooks.on("init", () => {
         onChange: () => location.reload(),
     });
 
-    if (game.modules.get("lib-wrapper")?.active) {
-        game.settings.register(MODULE_NAME, "flushVisibleOnly", {
-            name: game.i18n.localize("TC_CN.SETTINGS.FlushVisibleOnlyName"),
-            hint: game.i18n.localize("TC_CN.SETTINGS.FlushVisibleOnlyHint"),
-            scope: "world",
-            config: true,
-            default: false,
-            type: Boolean,
-            onChange: () => {
-                libWrapper.unregister(MODULE_NAME, "Messages.prototype.flush");
-                libWrapper.unregister(MODULE_NAME, "Messages.prototype.export");
-                location.reload();
-            },
-        });
-    }
+    game.settings.register(MODULE_NAME, "flushVisibleOnly", {
+        name: game.i18n.localize("TC_CN.SETTINGS.FlushVisibleOnlyName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.FlushVisibleOnlyHint"),
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean,
+        onChange: () => location.reload(),
+    });
 
     game.settings.register(MODULE_NAME, "autoNavigate", {
         name: game.i18n.localize("TC_CN.SETTINGS.AutoNavigateName"),
@@ -154,32 +148,6 @@ Hooks.on("ready", () => {
     }
 
     turndown = new TurndownService();
-
-    if (game.modules.get("lib-wrapper")?.active && flushVisibleOnly) {
-        libWrapper.register(MODULE_NAME, "Messages.prototype.flush", async function() {
-            return Dialog.confirm({
-                title: game.i18n.localize("CHAT.FlushTitle"),
-                content: game.i18n.localize("CHAT.FlushWarning"),
-                yes: () => ChatMessage.delete(this.entities
-                    .filter(m => isVisible(m))
-                    .map(m => m.id)),
-                options: {
-                    top: window.innerHeight - 150,
-                    left: window.innerWidth - 720
-                }
-            });
-        }, "OVERRIDE");
-
-        libWrapper.register(MODULE_NAME, "Messages.prototype.export", function() {
-            const log = this.entities
-                .filter(m => isVisible(m))
-                .map(m => m.export())
-                .join("\n---------------------------\n");
-            const date = new Date().toDateString().replace(/\s/g, "-");
-            const filename = `fvtt-log-${date}.txt`;
-            saveDataToFile(log, "text/plain", filename);
-        }, "OVERRIDE");
-    }
 });
 
 Hooks.on("renderSidebar", async (sidebar) => {
@@ -200,7 +168,7 @@ Hooks.on("renderSidebar", async (sidebar) => {
     };
 });
 
-Hooks.on("renderChatLog", async (_chatLog, html) => {
+Hooks.on("renderChatLog", (_chatLog, html) => {
     if (shouldHide) {
         return;
     }
@@ -247,6 +215,33 @@ Hooks.on("renderChatLog", async (_chatLog, html) => {
     });
     tabs.bind(html[0]);
     chatTabs = tabs;
+
+    if (flushVisibleOnly) {
+        html.find("a.chat-flush").unbind("click").click(function (event) {
+            event.preventDefault();
+            Dialog.confirm({
+                title: game.i18n.localize("CHAT.FlushTitle"),
+                content: game.i18n.localize("CHAT.FlushWarning"),
+                yes: () => ChatMessage.delete(game.messages
+                    .filter(m => isVisible(m))
+                    .map(m => m.id)),
+                options: {
+                    top: window.innerHeight - 150,
+                    left: window.innerWidth - 720
+                }
+            });
+        });
+        html.find("a.export-log").unbind("click").click(function (event) {
+            event.preventDefault();
+            const log = game.messages
+                .filter(m => isVisible(m))
+                .map(m => m.export())
+                .join("\n---------------------------\n");
+            const date = new Date().toDateString().replace(/\s/g, "-");
+            const filename = `fvtt-log-${date}-${currentTab}.txt`;
+            saveDataToFile(log, "text/plain", filename);
+        });
+    }
 });
 
 Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
