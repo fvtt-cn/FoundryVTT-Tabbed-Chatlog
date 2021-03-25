@@ -156,12 +156,11 @@ Hooks.on("ready", () => {
     turndown = new TurndownService();
 
     if (game.modules.get("lib-wrapper")?.active && flushVisibleOnly) {
-        libWrapper.register(MODULE_NAME, "Messages.prototype.flush", async () => {
-            // It's questionable to use game.messages instead of this.entities here.
+        libWrapper.register(MODULE_NAME, "Messages.prototype.flush", async function() {
             return Dialog.confirm({
                 title: game.i18n.localize("CHAT.FlushTitle"),
                 content: game.i18n.localize("CHAT.FlushWarning"),
-                yes: () => ChatMessage.delete(game.messages
+                yes: () => ChatMessage.delete(this.entities
                     .filter(m => isVisible(m))
                     .map(m => m.id)),
                 options: {
@@ -171,9 +170,8 @@ Hooks.on("ready", () => {
             });
         }, "OVERRIDE");
 
-        libWrapper.register(MODULE_NAME, "Messages.prototype.export", () => {
-            // It's questionable to use game.messages instead of this.entities here.
-            const log = game.messages
+        libWrapper.register(MODULE_NAME, "Messages.prototype.export", function() {
+            const log = this.entities
                 .filter(m => isVisible(m))
                 .map(m => m.export())
                 .join("\n---------------------------\n");
