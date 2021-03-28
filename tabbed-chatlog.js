@@ -343,7 +343,7 @@ Hooks.on("preCreateChatMessage", (chatMessage) => {
     if ((chatMessage.type ===  2 || chatMessage.type === 3) && !chatMessage.whisper?.length) {
         try {
             const scene = game.scenes.get(chatMessage.speaker.scene);
-            const webhook = scene.getFlag("tabbed-chatlog", "webhook") || icBackupWebhook;
+            const webhook = scene.getFlag(MODULE_NAME, "webhook") || icBackupWebhook;
             if (webhook) {
                 const speaker = chatMessage.speaker;
                 const actor = loadActorForChatMessage(speaker);
@@ -384,10 +384,10 @@ Hooks.on("renderSceneConfig", (app, html) => {
     }
 
     let loadedWebhookData = undefined;
-    if (app.object.data.flags["tabbed-chatlog"] && app.object.data.flags["tabbed-chatlog"].webhook) {
-        loadedWebhookData = app.object.getFlag("tabbed-chatlog", "webhook");
+    if (app.object.data.flags[MODULE_NAME] && app.object.data.flags[MODULE_NAME].webhook) {
+        loadedWebhookData = app.object.getFlag(MODULE_NAME, "webhook");
     } else {
-        app.object.setFlag("tabbed-chatlog", "webhook", "");
+        app.object.setFlag(MODULE_NAME, "webhook", "");
         loadedWebhookData = "";
     }
 
@@ -408,7 +408,7 @@ Hooks.on("closeSceneConfig", (app, html) => {
         return;
     }
 
-    app.object.setFlag("tabbed-chatlog", "webhook", html.find("input[name ='scenewebhook']")[0].value);
+    app.object.setFlag(MODULE_NAME, "webhook", html.find("input[name ='scenewebhook']")[0].value);
 });
 
 function isVisible(message) {
