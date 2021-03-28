@@ -6,7 +6,7 @@
 - 修复了 Discord Webhooks 的场景整合。
 ### Feature | 功能
 - DF-Hotkeys integration, now you can configure hotkeys to quickly navigate to chatlog tabs via DF-Hotkeys settings.
-- DF-Hotkeys 整合，现在可以通过 DF-Hotkeys 的配置界面，快速在不同的聊天栏之间切换。
+- DF-Hotkeys 整合，现在可以通过 DF-Hotkeys 的配置界面设定快捷键，快速在不同的聊天栏之间切换。
 
 ## v2.7.2
 ### Feature | 功能
