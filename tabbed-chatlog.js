@@ -48,7 +48,7 @@ Hooks.on("init", () => {
         config: true,
         default: "",
         type: String,
-        onChange: value => oocWebhook = value,
+        onChange: value => oocWebhook = value
     });
 
     game.settings.register(MODULE_NAME, "icBackupWebhook", {
@@ -58,7 +58,7 @@ Hooks.on("init", () => {
         config: true,
         default: "",
         type: String,
-        onChange: value => icBackupWebhook = value,
+        onChange: value => icBackupWebhook = value
     });
 
     game.settings.register(MODULE_NAME, "icChatInOoc", {
@@ -68,7 +68,7 @@ Hooks.on("init", () => {
         config: true,
         default: true,
         type: Boolean,
-        onChange: value => icChatInOoc = value,
+        onChange: value => icChatInOoc = value
     });
 
     game.settings.register(MODULE_NAME, "hideInStreamView", {
@@ -77,7 +77,7 @@ Hooks.on("init", () => {
         scope: "world",
         config: true,
         default: true,
-        type: Boolean,
+        type: Boolean
     });
 
     game.settings.register(MODULE_NAME, "initiativeTab", {
@@ -87,7 +87,7 @@ Hooks.on("init", () => {
         config: true,
         default: true,
         type: Boolean,
-        onChange: () => location.reload(),
+        onChange: () => location.reload()
     });
 
     game.settings.register(MODULE_NAME, "perSceneIc", {
@@ -97,7 +97,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: () => location.reload(),
+        onChange: () => location.reload()
     });
 
     game.settings.register(MODULE_NAME, "perSceneRolls", {
@@ -107,7 +107,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: () => location.reload(),
+        onChange: () => location.reload()
     });
 
     game.settings.register(MODULE_NAME, "flushVisibleOnly", {
@@ -117,7 +117,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: () => location.reload(),
+        onChange: () => location.reload()
     });
 
     game.settings.register(MODULE_NAME, "autoNavigate", {
@@ -127,7 +127,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: value => autoNavigate = value,
+        onChange: value => autoNavigate = value
     });
 
     shouldHide = game.settings.get(MODULE_NAME, "hideInStreamView") && window.location.href.endsWith("/stream");
@@ -139,6 +139,14 @@ Hooks.on("init", () => {
     perSceneRolls = game.settings.get(MODULE_NAME, "perSceneRolls");
     flushVisibleOnly = game.settings.get(MODULE_NAME, "flushVisibleOnly");
     autoNavigate = game.settings.get(MODULE_NAME, "autoNavigate");
+
+    // Not config.
+    game.settings.register(MODULE_NAME, "df-hotkeys-warned", {
+        scope: "client",
+        config: false,
+        default: false,
+        type: Boolean
+    });
 });
 
 Hooks.on("ready", () => {
@@ -148,6 +156,52 @@ Hooks.on("ready", () => {
     }
 
     turndown = new TurndownService();
+
+    if (game.modules.get("lib-df-hotkeys")?.active) {
+        // DF Hotkeys registration.
+        Hotkeys.registerGroup({
+            name: MODULE_NAME,
+            label: game.i18n.localize("TC_CN.SETTINGS.SelfLabel"),
+            description: game.i18n.localize("TC_CN.SETTINGS.SelfDescription")
+        });
+
+        Hotkeys.registerShortcut({
+            name: `${MODULE_NAME}.IC`,
+            label: game.i18n.localize("TC_CN.TABS.IC"),
+            group: MODULE_NAME,
+            default: { key: Hotkeys.keys.KeyC, alt: false, ctrl: false, shift: true },
+            onKeyDown: () => chatTabs?.activate("ic", { triggerCallback: true })
+        });
+        Hotkeys.registerShortcut({
+            name: `${MODULE_NAME}.OOC`,
+            label: game.i18n.localize("TC_CN.TABS.OOC"),
+            group: MODULE_NAME,
+            default: { key: Hotkeys.keys.KeyO, alt: false, ctrl: false, shift: true },
+            onKeyDown: () => chatTabs?.activate("ooc", { triggerCallback: true })
+        });
+        Hotkeys.registerShortcut({
+            name: `${MODULE_NAME}.Rolls`,
+            label: game.i18n.localize("TC_CN.TABS.Rolls"),
+            group: MODULE_NAME,
+            default: { key: Hotkeys.keys.KeyR, alt: false, ctrl: false, shift: true },
+            onKeyDown: () => chatTabs?.activate("rolls", { triggerCallback: true })
+        });
+
+        if (initiativeTab) {
+            Hotkeys.registerShortcut({
+                name: `${MODULE_NAME}.Initiative`,
+                label: game.i18n.localize("TC_CN.TABS.Initiative"),
+                group: MODULE_NAME,
+                default: { key: Hotkeys.keys.KeyI, alt: false, ctrl: false, shift: true },
+                onKeyDown: () => chatTabs?.activate("init", { triggerCallback: true })
+            });
+        }
+    } else if (game.user.isGM && !game.settings.get(MODULE_NAME, "df-hotkeys-warned")) {
+        // Warn only once for a client.
+        ui.notifications.warn("Tabbed Chatlog [FVTT-CN] requires the 'Library: DF Hotkeys' module " +
+            "to get hotkeys configuration working. Please install and activate this dependency.");
+        game.settings.set(MODULE_NAME, "df-hotkeys-warned", true);
+    }
 });
 
 Hooks.on("renderSidebar", async (sidebar) => {

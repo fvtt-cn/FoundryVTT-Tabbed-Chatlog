@@ -1,4 +1,7 @@
 {
+    "TC_CN.SETTINGS.SelfLabel": "Tabbed Chatlog [FVTT-CN]",
+    "TC_CN.SETTINGS.SelfDescription": "用于聊天框的消息分拆与快速切换",
+
     "TC_CN.SETTINGS.OocWebhookName": "用于超游聊天的 Discord Webhook",
     "TC_CN.SETTINGS.OocWebhookHint": "超游聊天始终发送到全局并且和场景无关",
 
