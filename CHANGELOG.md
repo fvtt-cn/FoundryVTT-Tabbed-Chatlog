@@ -23,5 +23,8 @@ Codes refactored.
 
 完成了代码重构，以便后续进行维护。
 ### Feature | 功能
-- Provide configuration of IC/Rolls messages shown per scene/global
-- 提供了将角色/掷骰消息按场景分拆与否的配置项
+- Provide configuration of IC/Rolls messages shown per scene/global.
+- 提供了将角色/掷骰消息按场景分拆与否的配置项。
+
+- Provide switch for standalone Initiative tab.
+- 提供了独立先攻掷骰栏的切换设置。
