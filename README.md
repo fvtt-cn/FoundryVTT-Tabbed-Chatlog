@@ -5,7 +5,7 @@
 # Tabbed Chatlog [FVTT-CN]
 Splits the Chatlog into In Character, Rolls, Out of Character, and Initiative.
 
-Currently, this branch removes the compatibility support for `Salon` and `Dice So Nice`. If you need those mods to work properly, please use [the original version](https://github.com/cswendrowski/FoundryVTT-Tabbed-Chatlog).
+Currently, this fork removes the compatibility support for `Salon` and `Dice So Nice`. If you need those mods to work properly, please use [the original version](https://github.com/cswendrowski/FoundryVTT-Tabbed-Chatlog).
 
 分割聊天面板为四块：角色、掷骰、超游、先攻，避免刷屏影响聊天信息阅读。支持在不同情况下自动切换到对应的面板，使用后令 FVTT 聊天面板简洁很多。
 
