@@ -1,37 +1,39 @@
 {
-  "name": "tabbed-chatlog-fvtt-cn",
-  "title": "Tabbed Chatlog Initiative [FVTT-CN]",
-  "description": "Splits the Chatlog into In Character, Rolls, Out of Character and Initiative.",
-  "version": "2.7.3",
-  "minimumCoreVersion": "0.6.2",
-  "compatibleCoreVersion": "0.7.9",
-  "author": "Cody Swendrowski <cody@swendrowski.us> & hmqgg <mitchx7@outlook.com>",
-  "esmodules": [
-    "./tabbed-chatlog.js"
-  ],
-  "scripts": [
-  ],
-  "styles": [
-    "/styles/tabbed-chatlog.css"
-  ],
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "languages/en.json"
-    },
-    {
-      "lang": "es",
-      "name": "Español",
-      "path": "languages/es.json"
-    },
-    {
-      "lang": "cn",
-      "name": "中文",
-      "path": "languages/cn.json"
-    }
-  ],
-  "url": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog",
-  "manifest": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog/releases/download/latest/module.json",
-  "download": "https://github.com/fvtt-cn/FoundryVTT-tabbed-chatlog/releases/download/2.7.3/module.zip"
+    "name": "tabbed-chatlog-fvtt-cn",
+    "title": "Tabbed Chatlog Initiative [FVTT-CN]",
+    "description": "Splits the Chatlog into In Character, Rolls, Out of Character and Initiative.",
+    "version": "2.7.3",
+    "minimumCoreVersion": "0.6.2",
+    "compatibleCoreVersion": "0.7.9",
+    "author": [
+        "Cody Swendrowski <cody@swendrowski.us>",
+        "hmqgg <mitchx7@outlook.com>"
+    ],
+    "esmodules": [
+        "./tabbed-chatlog.js"
+    ],
+    "styles": [
+        "/styles/tabbed-chatlog.css"
+    ],
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "languages/en.json"
+        },
+        {
+            "lang": "es",
+            "name": "Español",
+            "path": "languages/es.json"
+        },
+        {
+            "lang": "cn",
+            "name": "中文",
+            "path": "languages/cn.json"
+        }
+    ],
+    "url": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog",
+    "changelog": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/blob/master/CHANGELOG.md",
+    "manifest": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/releases/download/latest/module.json",
+    "download": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/releases/download/2.7.3/module.zip"
 }
