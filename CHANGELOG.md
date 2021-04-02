@@ -1,5 +1,10 @@
 # Changelog | 更新日志
 
+## v2.7.4
+### Feature | 功能
+- Experimental Feature: Custom Tabs, message only shows on the tab on which the author is when sent.
+- 实验性功能：自定义聊天栏，消息只会显示在消息发送者发送消息时所在的聊天栏里。
+
 ## v2.7.3
 ### Fix | 修复
 - Fix Discord Webhooks integration per scene.

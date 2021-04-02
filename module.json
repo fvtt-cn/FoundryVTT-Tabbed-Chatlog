@@ -2,7 +2,7 @@
     "name": "tabbed-chatlog-fvtt-cn",
     "title": "Tabbed Chatlog Initiative [FVTT-CN]",
     "description": "Splits the Chatlog into In Character, Rolls, Out of Character and Initiative.",
-    "version": "2.7.3",
+    "version": "2.7.4",
     "minimumCoreVersion": "0.6.2",
     "compatibleCoreVersion": "0.7.9",
     "author": [
@@ -35,5 +35,5 @@
     "url": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog",
     "changelog": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/blob/master/CHANGELOG.md",
     "manifest": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/releases/download/latest/module.json",
-    "download": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/releases/download/2.7.3/module.zip"
+    "download": "https://github.com/fvtt-cn/FoundryVTT-Tabbed-Chatlog/releases/download/2.7.4/module.zip"
 }

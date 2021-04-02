@@ -32,6 +32,9 @@
     "TC_CN.SETTINGS.AutoNavigateName": "自动切换到新消息所在栏？",
     "TC_CN.SETTINGS.AutoNavigateHint": "客户端设置，默认禁用，不会自动切换到先攻栏",
 
+    "TC_CN.SETTINGS.CustomTabsName": "自定义聊天栏",
+    "TC_CN.SETTINGS.CustomTabsHint": "（实验性功能，需要重载）每个自定义聊天栏之间使用';'分号分隔",
+
     "TC_CN.TABS.IC": "角色",
     "TC_CN.TABS.OOC": "超游",
     "TC_CN.TABS.Rolls": "掷骰",

@@ -17,6 +17,7 @@ var initiativeTab = true;
 var perSceneIc = false;
 var perSceneRolls = false;
 var flushVisibleOnly = false;
+var customTabs = "";
 
 // Client Settings.
 var autoNavigate = false;
@@ -27,6 +28,7 @@ var turndown = undefined;
 var chatTabs = undefined;
 var sidebarCallback = undefined;
 var shouldHide = true;
+var splitTabs = [];
 
 // CONST Variables.
 const MODULE_NAME = "tabbed-chatlog-fvtt-cn";
@@ -130,6 +132,16 @@ Hooks.on("init", () => {
         onChange: value => autoNavigate = value
     });
 
+    game.settings.register(MODULE_NAME, "customTabs", {
+        name: game.i18n.localize("TC_CN.SETTINGS.CustomTabsName"),
+        hint: game.i18n.localize("TC_CN.SETTINGS.CustomTabsHint"),
+        scope: "world",
+        config: true,
+        default: "",
+        type: String,
+        onChange: () => location.reload()
+    });
+
     shouldHide = game.settings.get(MODULE_NAME, "hideInStreamView") && window.location.href.endsWith("/stream");
     icChatInOoc = game.settings.get(MODULE_NAME, "icChatInOoc");
     icBackupWebhook = game.settings.get(MODULE_NAME, "icBackupWebhook");
@@ -139,6 +151,8 @@ Hooks.on("init", () => {
     perSceneRolls = game.settings.get(MODULE_NAME, "perSceneRolls");
     flushVisibleOnly = game.settings.get(MODULE_NAME, "flushVisibleOnly");
     autoNavigate = game.settings.get(MODULE_NAME, "autoNavigate");
+    customTabs = game.settings.get(MODULE_NAME, "customTabs") ?? "";
+    splitTabs = customTabs.split(";").filter(s => s.length > 0);
 
     // Not config.
     game.settings.register(MODULE_NAME, "df-hotkeys-warned", {
@@ -227,6 +241,17 @@ Hooks.on("renderChatLog", (_chatLog, html) => {
         return;
     }
 
+    let customHeader = "";
+    if (splitTabs.length > 1) {
+        for (let splitTab of splitTabs) {
+            customHeader += `<a class="item ${splitTab}" data-tab="${splitTab}">${splitTab}</a>`;
+        }
+        if (customHeader !== "") {
+            customHeader = `<nav class = "tabbedchatlog tabs">${customHeader}</nav>`;
+            currentTab = splitTabs[0];
+        }
+    }
+
     const initTabHtml = initiativeTab
         ? `
         <a class="item init" data-tab="init">
@@ -235,7 +260,7 @@ Hooks.on("renderChatLog", (_chatLog, html) => {
         `
         : "";
     const notifyClass = `tc-notification-${initiativeTab ? 4 : 3}`;
-    const tabHeader = `
+    const tabHeader = customHeader === "" ? `
     <nav class="tabbedchatlog tabs">
         <a class="item ic" data-tab="ic">
             ${game.i18n.localize("TC_CN.TABS.IC")}
@@ -254,7 +279,7 @@ Hooks.on("renderChatLog", (_chatLog, html) => {
 
         ${initTabHtml}
     </nav>
-    `;
+    ` : customHeader;
     html.prepend(tabHeader);
 
     const tabs = new TabsV2({
@@ -298,8 +323,24 @@ Hooks.on("renderChatLog", (_chatLog, html) => {
     }
 });
 
-Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
+Hooks.on("renderChatMessage", (chatMessage, html, data) => {
     if (shouldHide) {
+        return;
+    }
+
+    if (splitTabs.length > 1) {
+        let splitTab = chatMessage.getFlag(MODULE_NAME, "splitTab") ?? currentTab;
+        if (!splitTabs.includes(splitTab)) {
+            // Fallback if the tab not exists anymore.
+            splitTab = currentTab;
+        }
+        const splitMsgType = `msgtype-${splitTab}`;
+        html.toggleClass(splitMsgType, true);
+        if (currentTab === splitTab) {
+            html.toggleClass("normalHide", false);
+        } else {
+            html.toggleClass("normalHide", true);
+        }
         return;
     }
 
@@ -331,7 +372,7 @@ Hooks.on("renderChatMessage", (_chatMessage, html, data) => {
 });
 
 Hooks.on("renderSceneNavigation", () => {
-    if (shouldHide) {
+    if (shouldHide || splitTabs.length > 1) {
         return;
     }
 
@@ -342,6 +383,11 @@ Hooks.on("renderSceneNavigation", () => {
 });
 
 Hooks.on("createChatMessage", (chatMessage) => {
+    if (splitTabs.length > 1 && chatMessage.data.user === game.user.id) {
+        chatMessage.setFlag(MODULE_NAME, "splitTab", currentTab);
+        return;
+    }
+
     switch (chatMessage.data.type) {
         case 0:
             if (currentTab !== "rolls") {
@@ -479,6 +525,12 @@ function isVisible(message) {
 }
 
 function refreshLogs() {
+    if (splitTabs.length > 1) {
+        hideMessages(...splitTabs.filter(t => t !== currentTab));
+        showMessages(currentTab);
+        return;
+    }
+
     switch (currentTab) {
         case "ic":
             hideMessages(0, 1, 4, 5, "5i");
