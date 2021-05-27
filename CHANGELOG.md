@@ -1,5 +1,12 @@
 # Changelog | 更新日志
 
+## v2.8.0
+- Manifest updated, provide the compatibility support of `0.8.x`
+- 更新了清单文件，提供 `0.8.x` 版本的兼容性支持
+### Fix | 修复
+- Call Debounce for the refresh after settings saved to prevent from settings save failure
+- 使用内置的 Debounce 进行设置保存后的刷新，避免设置保存失败
+
 ## v2.7.4
 ### Feature | 功能
 - Experimental Feature: Custom Tabs, message only shows on the tab on which the author is when sent.
