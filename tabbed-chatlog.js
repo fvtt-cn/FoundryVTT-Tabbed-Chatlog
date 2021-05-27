@@ -41,6 +41,7 @@ const tabTypeMap = new Map([
     [ "5", "rolls" ],
     [ "5i", "init" ]
 ]);
+const debouncedReload = foundry.utils.debounce(window.location.reload, 100);
 
 Hooks.on("init", () => {
     game.settings.register(MODULE_NAME, "oocWebhook", {
@@ -89,7 +90,7 @@ Hooks.on("init", () => {
         config: true,
         default: true,
         type: Boolean,
-        onChange: () => location.reload()
+        onChange: debouncedReload
     });
 
     game.settings.register(MODULE_NAME, "perSceneIc", {
@@ -99,7 +100,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: () => location.reload()
+        onChange: debouncedReload
     });
 
     game.settings.register(MODULE_NAME, "perSceneRolls", {
@@ -109,7 +110,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: () => location.reload()
+        onChange: debouncedReload
     });
 
     game.settings.register(MODULE_NAME, "flushVisibleOnly", {
@@ -119,7 +120,7 @@ Hooks.on("init", () => {
         config: true,
         default: false,
         type: Boolean,
-        onChange: () => location.reload()
+        onChange: debouncedReload
     });
 
     game.settings.register(MODULE_NAME, "autoNavigate", {
@@ -139,7 +140,7 @@ Hooks.on("init", () => {
         config: true,
         default: "",
         type: String,
-        onChange: () => location.reload()
+        onChange: debouncedReload
     });
 
     shouldHide = game.settings.get(MODULE_NAME, "hideInStreamView") && window.location.href.endsWith("/stream");
